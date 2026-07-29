@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent, type ChartConfig } from '@/components/ui/chart';
 import { Line, LineChart, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { TableSkeleton, Skeleton } from '@/components/ui/skeleton';
 
 type Station = {
   id: string;
@@ -77,7 +78,7 @@ export function TelemetryList() {
         </CardHeader>
         <CardContent>
           {isLoadingStations ? (
-            <p>Loading stations...</p>
+            <Skeleton className="h-10 w-full sm:w-[300px]" />
           ) : (
             <Select onValueChange={(v) => setSelectedStationUuid(v || '')} value={selectedStationUuid}>
               <SelectTrigger className="w-full sm:w-[300px]">
@@ -97,7 +98,26 @@ export function TelemetryList() {
 
       {selectedStationUuid && (
         <>
-          {isLoadingTelemetry && <div className="p-4">Loading data...</div>}
+          {isLoadingTelemetry && (
+            <div className="grid gap-6 grid-cols-1 lg:grid-cols-2 mt-6">
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>Grafik Data Sensor</CardTitle>
+                </CardHeader>
+                <CardContent className="h-[300px]">
+                  <Skeleton className="w-full h-full" />
+                </CardContent>
+              </Card>
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>Tabel Riwayat</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <TableSkeleton rows={5} cols={4} />
+                </CardContent>
+              </Card>
+            </div>
+          )}
           {isError && <div className="p-4 text-destructive">Error loading data.</div>}
           {!isLoadingTelemetry && !isError && telemetries.length === 0 && (
             <div className="p-4">Belum ada data sensor.</div>

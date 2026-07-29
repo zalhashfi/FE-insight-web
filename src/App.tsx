@@ -13,7 +13,19 @@ import { TelemetryList } from './pages/telemetry/TelemetryList';
 import { FirmwarePage } from './pages/firmware/FirmwarePage';
 import { UserList } from './pages/users/UserList';
 
-const queryClient = new QueryClient();
+import { TicketList } from './pages/tickets/TicketList';
+import { ProfilePage } from './pages/profile/ProfilePage';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 0,
+      gcTime: 5 * 60 * 1000,
+      refetchOnWindowFocus: true,
+      retry: 1,
+    },
+  },
+});
 
 function App() {
   return (
@@ -34,6 +46,8 @@ function App() {
                 <Route path="/telemetry" element={<TelemetryList />} />
                 <Route path="/firmware" element={<FirmwarePage />} />
                 <Route path="/users" element={<UserList />} />
+                <Route path="/tickets" element={<TicketList />} />
+                <Route path="/profile" element={<ProfilePage />} />
               </Route>
             </Route>
             

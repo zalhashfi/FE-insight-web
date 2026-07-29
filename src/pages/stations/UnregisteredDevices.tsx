@@ -4,6 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { AlertCircle, Plus, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router';
+import { TableSkeleton } from '@/components/ui/skeleton';
 
 // API Fetcher
 const fetchUnregisteredDevices = async () => {
@@ -63,7 +64,7 @@ export const UnregisteredDevices = () => {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="flex justify-center p-8">Loading...</div>
+              <TableSkeleton rows={3} cols={3} />
             ) : data?.data && data.data.length > 0 ? (
               <Table>
                 <TableHeader>

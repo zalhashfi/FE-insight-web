@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../co
 import { Radio, AlertCircle, Clock, Activity } from 'lucide-react';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '../components/ui/chart';
 import { Line, LineChart, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { CardSkeleton, Skeleton } from '../components/ui/skeleton';
 
 type Station = {
   id: string;
@@ -43,7 +44,7 @@ export function DashboardHome() {
     queryFn: fetchStations,
   });
 
-  const { data: unregistered } = useQuery({
+  const { data: unregistered, isLoading: isLoadingUnregistered } = useQuery({
     queryKey: ['unregistered'],
     queryFn: fetchUnregistered,
     enabled: canSeeUnregistered,
@@ -84,48 +85,54 @@ export function DashboardHome() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Stasiun Aktif</CardTitle>
-            <Radio className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{isLoadingStations ? '...' : stations?.length || 0}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Alat yang terdaftar dalam sistem
-            </p>
-          </CardContent>
-        </Card>
-        
-        {canSeeUnregistered && (
+        {isLoadingStations ? <CardSkeleton /> : (
           <Card className="hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Perlu Didaftarkan</CardTitle>
-              <AlertCircle className="h-4 w-4 text-destructive" />
+              <CardTitle className="text-sm font-medium">Total Stasiun Aktif</CardTitle>
+              <Radio className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{unregistered ? unregistered.length : 0}</div>
+              <div className="text-2xl font-bold">{stations?.length || 0}</div>
               <p className="text-xs text-muted-foreground mt-1">
-                Perangkat terdeteksi belum diregistrasi
+                Alat yang terdaftar dalam sistem
               </p>
             </CardContent>
           </Card>
         )}
+        
+        {canSeeUnregistered && (
+          isLoadingUnregistered ? <CardSkeleton /> : (
+            <Card className="hover:shadow-md transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Perlu Didaftarkan</CardTitle>
+                <AlertCircle className="h-4 w-4 text-destructive" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{unregistered ? unregistered.length : 0}</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Perangkat terdeteksi belum diregistrasi
+                </p>
+              </CardContent>
+            </Card>
+          )
+        )}
 
-        <Card className="hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Data Terakhir Masuk</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {lastData ? new Date(lastData.measuredAt || lastData.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-'}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {lastData ? new Date(lastData.measuredAt || lastData.timestamp).toLocaleDateString('id-ID') : 'Belum ada data'}
-            </p>
-          </CardContent>
-        </Card>
+        {isLoadingTelemetry ? <CardSkeleton /> : (
+          <Card className="hover:shadow-md transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Data Terakhir Masuk</CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {lastData ? new Date(lastData.measuredAt || lastData.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-'}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {lastData ? new Date(lastData.measuredAt || lastData.timestamp).toLocaleDateString('id-ID') : 'Belum ada data'}
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {stations && stations.length > 0 && (
@@ -141,8 +148,8 @@ export function DashboardHome() {
           </CardHeader>
           <CardContent>
             {isLoadingTelemetry ? (
-              <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                Memuat data...
+              <div className="h-[300px] flex items-center justify-center p-6">
+                <Skeleton className="h-full w-full" />
               </div>
             ) : telemetries.length > 0 ? (
               <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
