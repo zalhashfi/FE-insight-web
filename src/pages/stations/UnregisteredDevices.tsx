@@ -7,12 +7,11 @@ import { useNavigate } from 'react-router';
 import { TableSkeleton } from '@/components/ui/skeleton';
 import { useState } from 'react';
 import { AddStationDialog } from './AddStationDialog';
+import { apiFetch } from '@/lib/api';
 
 // API Fetcher
 const fetchUnregisteredDevices = async () => {
-  const res = await fetch('/api/stations/unregistered', {
-    credentials: 'include'
-  });
+  const res = await apiFetch('/api/stations/unregistered');
   
   if (!res.ok) {
     throw new Error('Failed to fetch unregistered devices');
@@ -33,9 +32,8 @@ export const UnregisteredDevices = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (macAddress: string) => {
-      const res = await fetch(`/api/stations/unregistered/${macAddress}`, {
+      const res = await apiFetch(`/api/stations/unregistered/${macAddress}`, {
         method: 'DELETE',
-        credentials: 'include'
       });
       if (!res.ok) throw new Error('Failed to delete');
     },

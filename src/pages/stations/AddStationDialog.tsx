@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { logToCloudflare } from '@/utils/logger';
+import { apiFetch } from '@/lib/api';
 
 export function AddStationDialog({
   macAddress: externalMac = '',
@@ -65,12 +66,11 @@ export function AddStationDialog({
         ...(data.longitude ? { longitude: parseFloat(data.longitude) } : {})
       };
       
-      const res = await fetch('/api/stations', {
+      const res = await apiFetch('/api/stations', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        credentials: 'include',
         body: JSON.stringify(payload)
       });
       if (!res.ok) {
