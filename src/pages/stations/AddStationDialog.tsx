@@ -14,31 +14,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { logToCloudflare } from '@/utils/logger';
-import { apiFetch } from '@/lib/api';
 
-export function AddStationDialog({
-  macAddress: externalMac = '',
-  open: externalOpen,
-  onOpenChange,
-  onSuccess
-}: {
-  macAddress?: string;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-  onSuccess?: () => void;
-} = {}) {
-  const [internalOpen, setInternalOpen] = useState(false);
+export function AddStationDialog() {
+  const [open, setOpen] = useState(false);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const prefilledMac = externalMac || searchParams.get('mac') || '';
+  const prefilledMac = searchParams.get('mac') || '';
   const queryClient = useQueryClient();
-  
-  const isControlled = externalOpen !== undefined;
-  const open = isControlled ? externalOpen : internalOpen;
-  const setOpen = isControlled ? (onOpenChange || (() => {})) : setInternalOpen;
 
   const [formData, setFormData] = useState({
-    uuid: '',
     name: '',
     projectName: '',
     macAddress: prefilledMac,
@@ -57,7 +41,7 @@ export function AddStationDialog({
   const mutation = useMutation({
     mutationFn: async (data: typeof formData) => {
       const payload = {
-        uuid: data.uuid,
+        uuid: crypto.randomUUID(),
         name: data.name,
         projectName: data.projectName,
         type: data.type,
@@ -66,11 +50,12 @@ export function AddStationDialog({
         ...(data.longitude ? { longitude: parseFloat(data.longitude) } : {})
       };
       
-      const res = await apiFetch('/api/stations', {
+      const res = await fetch('/api/stations', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify(payload)
       });
       if (!res.ok) {
@@ -82,10 +67,8 @@ export function AddStationDialog({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stations'] });
       setOpen(false);
-      setFormData({ uuid: '', name: '', projectName: '', macAddress: '', type: 'aqms', latitude: '', longitude: '' });
-      if (onSuccess) {
-        onSuccess();
-      } else if (prefilledMac) {
+      setFormData({ name: '', projectName: '', macAddress: '', type: 'aqms', latitude: '', longitude: '' });
+      if (prefilledMac) {
         navigate('/stations'); // clear mac from url
       }
     },
@@ -111,23 +94,6 @@ export function AddStationDialog({
           </DialogDescription>
         </DialogHeader>
         <form className="grid gap-4 py-4" onSubmit={handleSubmit}>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="uuid" className="text-right">ID Alat (UUID)</Label>
-            <div className="col-span-3">
-              <Input 
-                id="uuid" 
-                placeholder="Contoh: AQMS-001, SOC-TANAH-01" 
-                value={formData.uuid}
-                onChange={e => setFormData({ ...formData, uuid: e.target.value })}
-                minLength={3}
-                maxLength={20}
-                pattern="[A-Za-z0-9\-]+"
-                title="Hanya huruf, angka, dan tanda hubung (-)"
-                required
-              />
-              <p className="text-[10px] text-muted-foreground mt-1">Gunakan format singkat seperti AQMS-001</p>
-            </div>
-          </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="name" className="text-right">Nama</Label>
             <Input 
