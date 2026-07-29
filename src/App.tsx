@@ -22,7 +22,11 @@ const queryClient = new QueryClient({
       staleTime: 0,
       gcTime: 5 * 60 * 1000,
       refetchOnWindowFocus: true,
-      retry: 1,
+      retry: (failureCount, error: any) => {
+        // Don't retry on 401
+        if (error?.status === 401 || error?.message === 'Session expired') return false;
+        return failureCount < 1;
+      },
     },
   },
 });

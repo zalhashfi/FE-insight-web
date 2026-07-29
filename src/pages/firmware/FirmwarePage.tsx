@@ -14,8 +14,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, RefreshCw } from 'lucide-react';
 import { TableSkeleton } from '@/components/ui/skeleton';
+import { apiFetch } from '@/lib/api';
 
 type Firmware = {
   id: string;
@@ -32,45 +33,42 @@ type Station = {
 };
 
 async function fetchFirmwares(): Promise<Firmware[]> {
-  const res = await fetch('/api/firmware', { credentials: 'include' });
+  const res = await apiFetch('/api/firmware');
   if (!res.ok) throw new Error('Failed to fetch firmware');
   const data = await res.json();
   return data.firmwares || [];
 }
 
 async function fetchStations(): Promise<Station[]> {
-  const res = await fetch('/api/stations', { credentials: 'include' });
+  const res = await apiFetch('/api/stations');
   if (!res.ok) throw new Error('Failed to fetch stations');
   const data = await res.json();
   return data.stations || [];
 }
 
 async function createFirmware(data: { projectName: string; version: string; binFileUrl: string; releaseNotes: string; isLatest: boolean }) {
-  const res = await fetch('/api/firmware', {
+  const res = await apiFetch('/api/firmware', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
-    credentials: 'include',
   });
   if (!res.ok) throw new Error('Failed to create firmware');
   return res.json();
 }
 
 async function updateFirmware(data: { id: string; payload: Partial<Firmware> }) {
-  const res = await fetch(`/api/firmware/${data.id}`, {
+  const res = await apiFetch(`/api/firmware/${data.id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data.payload),
-    credentials: 'include',
   });
   if (!res.ok) throw new Error('Failed to update firmware');
   return res.json();
 }
 
 async function deleteFirmware(id: string) {
-  const res = await fetch(`/api/firmware/${id}`, {
+  const res = await apiFetch(`/api/firmware/${id}`, {
     method: 'DELETE',
-    credentials: 'include',
   });
   if (!res.ok) throw new Error('Failed to delete firmware');
   return res.json();
@@ -97,7 +95,7 @@ export function FirmwarePage() {
   const [deleteFw, setDeleteFw] = useState<Firmware | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState('');
 
-  const { data: firmwares, isLoading, isError } = useQuery({
+  const { data: firmwares, isLoading, isError, refetch, isRefetching } = useQuery({
     queryKey: ['firmware'],
     queryFn: fetchFirmwares,
   });
@@ -226,8 +224,12 @@ export function FirmwarePage() {
       </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Manajemen Firmware</CardTitle>
+          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isRefetching}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${isRefetching ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
         </CardHeader>
         <CardContent>
           <Table>

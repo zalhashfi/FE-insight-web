@@ -1,7 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
-import { Radio, AlertCircle, Clock, Activity } from 'lucide-react';
+import { Radio, AlertCircle, Clock, Activity, RefreshCw } from 'lucide-react';
+import { Button } from '../components/ui/button';
+import { apiFetch } from '../lib/api';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '../components/ui/chart';
 import { Line, LineChart, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { CardSkeleton, Skeleton } from '../components/ui/skeleton';
@@ -14,14 +16,14 @@ type Station = {
 };
 
 async function fetchStations(): Promise<Station[]> {
-  const res = await fetch('/api/stations', { credentials: 'include' });
+  const res = await apiFetch('/api/stations');
   if (!res.ok) throw new Error('Failed to fetch stations');
   const json = await res.json();
   return json.stations || [];
 }
 
 async function fetchUnregistered() {
-  const res = await fetch('/api/stations/unregistered', { credentials: 'include' });
+  const res = await apiFetch('/api/stations/unregistered');
   if (!res.ok) throw new Error('Failed to fetch unregistered devices');
   const json = await res.json();
   return json.data || [];
@@ -29,13 +31,14 @@ async function fetchUnregistered() {
 
 async function fetchTelemetry(stationUuid: string) {
   if (!stationUuid) return { type: '', data: [] };
-  const res = await fetch(`/api/data/${stationUuid}/history?limit=100`, { credentials: 'include' });
+  const res = await apiFetch(`/api/data/${stationUuid}/history?limit=100`);
   if (!res.ok) throw new Error('Failed to fetch telemetry');
   return res.json();
 }
 
 export function DashboardHome() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   
   const canSeeUnregistered = user?.role === 'admin' || user?.role === 'engineer';
 
@@ -64,12 +67,12 @@ export function DashboardHome() {
 
   const chartConfig: ChartConfig = type === 'aqms' ? {
     pm25: { label: 'PM 2.5', color: 'hsl(var(--chart-1))' },
-    temperature: { label: 'Suhu', color: 'hsl(var(--chart-2))' },
-    humidity: { label: 'Kelembapan', color: 'hsl(var(--chart-3))' },
+    temp: { label: 'Suhu', color: 'hsl(var(--chart-2))' },
+    hum: { label: 'Kelembapan', color: 'hsl(var(--chart-3))' },
   } : {
-    moisture: { label: 'Moisture', color: 'hsl(var(--chart-1))' },
-    temperature: { label: 'Suhu', color: 'hsl(var(--chart-2))' },
-    ph: { label: 'pH', color: 'hsl(var(--chart-3))' },
+    ph: { label: 'pH', color: 'hsl(var(--chart-1))' },
+    temp: { label: 'Suhu', color: 'hsl(var(--chart-2))' },
+    hum: { label: 'Kelembapan', color: 'hsl(var(--chart-3))' },
   };
 
   const chartData = [...telemetries].reverse().map((item: any) => ({
@@ -79,9 +82,15 @@ export function DashboardHome() {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Dashboard Overview</h2>
-        <p className="text-muted-foreground mt-2">Selamat datang kembali, {user?.fullName}</p>
+      <div className="flex flex-row items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Dashboard Overview</h2>
+          <p className="text-muted-foreground mt-2">Selamat datang kembali, {user?.fullName}</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => queryClient.invalidateQueries()} disabled={isLoadingStations || isLoadingTelemetry}>
+          <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingStations || isLoadingTelemetry ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

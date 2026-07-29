@@ -13,10 +13,11 @@ import { AddStationDialog } from './AddStationDialog';
 import { logToCloudflare } from '@/utils/logger';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { apiFetch } from '@/lib/api';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { TableSkeleton } from '@/components/ui/skeleton';
 
@@ -32,7 +33,7 @@ type Station = {
 };
 
 async function fetchStations(): Promise<Station[]> {
-  const res = await fetch('/api/stations', { credentials: 'include' });
+  const res = await apiFetch('/api/stations');
   if (!res.ok) {
     logToCloudflare('error', 'Failed to fetch stations', { status: res.status });
     throw new Error('Failed to fetch stations');
@@ -42,11 +43,10 @@ async function fetchStations(): Promise<Station[]> {
 }
 
 async function updateStation(data: { uuid: string, payload: Partial<Station> }) {
-  const res = await fetch(`/api/stations/${data.uuid}`, {
+  const res = await apiFetch(`/api/stations/${data.uuid}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data.payload),
-    credentials: 'include',
   });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
@@ -56,9 +56,8 @@ async function updateStation(data: { uuid: string, payload: Partial<Station> }) 
 }
 
 async function deleteStation(uuid: string) {
-  const res = await fetch(`/api/stations/${uuid}`, {
+  const res = await apiFetch(`/api/stations/${uuid}`, {
     method: 'DELETE',
-    credentials: 'include',
   });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
@@ -88,7 +87,7 @@ export function StationList() {
   const [deleteConfirm, setDeleteConfirm] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  const { data: stations, isLoading, isError } = useQuery({
+  const { data: stations, isLoading, isError, refetch, isRefetching } = useQuery({
     queryKey: ['stations'],
     queryFn: fetchStations,
   });
@@ -163,7 +162,13 @@ export function StationList() {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Daftar Alat (Stations)</CardTitle>
-        {canEdit && <AddStationDialog />}
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isRefetching}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${isRefetching ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          {canEdit && <AddStationDialog />}
+        </div>
       </CardHeader>
       <CardContent>
         <Table>
