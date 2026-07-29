@@ -15,12 +15,26 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { logToCloudflare } from '@/utils/logger';
 
-export function AddStationDialog() {
-  const [open, setOpen] = useState(false);
+export function AddStationDialog({
+  macAddress: externalMac = '',
+  open: externalOpen,
+  onOpenChange,
+  onSuccess
+}: {
+  macAddress?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  onSuccess?: () => void;
+} = {}) {
+  const [internalOpen, setInternalOpen] = useState(false);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const prefilledMac = searchParams.get('mac') || '';
+  const prefilledMac = externalMac || searchParams.get('mac') || '';
   const queryClient = useQueryClient();
+  
+  const isControlled = externalOpen !== undefined;
+  const open = isControlled ? externalOpen : internalOpen;
+  const setOpen = isControlled ? (onOpenChange || (() => {})) : setInternalOpen;
 
   const [formData, setFormData] = useState({
     uuid: '',
@@ -69,7 +83,9 @@ export function AddStationDialog() {
       queryClient.invalidateQueries({ queryKey: ['stations'] });
       setOpen(false);
       setFormData({ uuid: '', name: '', projectName: '', macAddress: '', type: 'aqms', latitude: '', longitude: '' });
-      if (prefilledMac) {
+      if (onSuccess) {
+        onSuccess();
+      } else if (prefilledMac) {
         navigate('/stations'); // clear mac from url
       }
     },
