@@ -36,7 +36,7 @@ async function fetchFirmwares(): Promise<Firmware[]> {
   const res = await apiFetch('/api/firmware');
   if (!res.ok) throw new Error('Failed to fetch firmware');
   const data = await res.json();
-  return data.firmwares || [];
+  return data.data || [];
 }
 
 async function fetchStations(): Promise<Station[]> {
