@@ -11,9 +11,7 @@ import {
   LogOut,
   Menu,
   ChevronLeft,
-  ChevronRight,
-  Wrench,
-  UserCog
+  ChevronRight
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -24,13 +22,12 @@ export function DashboardLayout() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const navItems = [
-    { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'engineer', 'user'], end: true },
-    { to: '/stations', label: 'Alat', icon: Radio, roles: ['admin', 'engineer'], end: true },
-    { to: '/stations/unregistered', label: 'Perlu Didaftarkan', icon: AlertCircle, roles: ['admin', 'engineer'], end: true },
-    { to: '/telemetry', label: 'Data Sensor', icon: Activity, roles: ['admin', 'engineer', 'user'], end: true },
-    { to: '/firmware', label: 'Firmware', icon: HardDrive, roles: ['admin', 'engineer'], end: true },
-    { to: '/tickets', label: 'Tiket', icon: Wrench, roles: ['admin', 'engineer'], end: true },
-    { to: '/users', label: 'Pengguna', icon: Users, roles: ['admin'], end: true },
+    { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'engineer', 'user'] },
+    { to: '/stations', label: 'Alat', icon: Radio, roles: ['admin', 'engineer'] },
+    { to: '/stations/unregistered', label: 'Perlu Didaftarkan', icon: AlertCircle, roles: ['admin', 'engineer'] },
+    { to: '/telemetry', label: 'Data Sensor', icon: Activity, roles: ['admin', 'engineer', 'user'] },
+    { to: '/firmware', label: 'Firmware', icon: HardDrive, roles: ['admin', 'engineer'] },
+    { to: '/users', label: 'Pengguna', icon: Users, roles: ['admin'] },
   ];
 
   const allowedNavItems = navItems.filter(item => user && item.roles.includes(user.role));
@@ -57,7 +54,6 @@ export function DashboardLayout() {
             <NavLink
               key={item.to}
               to={item.to}
-              end={item.end}
               onClick={() => setIsMobileOpen(false)}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
@@ -90,28 +86,12 @@ export function DashboardLayout() {
             )}
           </div>
         )}
-        
-        <NavLink 
-          to="/profile" 
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-3 py-2 rounded-md transition-colors w-full mb-2 ${
-              isActive 
-                ? 'bg-primary/10 text-primary font-medium' 
-                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-            } ${isCollapsed ? 'justify-center px-0' : ''}`
-          }
-          onClick={() => setIsMobileOpen(false)}
-        >
-          <UserCog size={18} className={isCollapsed ? '' : 'shrink-0'} />
-          {!isCollapsed && <span>Profil</span>}
-        </NavLink>
-
         <Button 
           variant="destructive" 
           className={`w-full ${isCollapsed ? 'px-2' : ''}`}
           onClick={() => logout()}
         >
-          <LogOut size={18} className={isCollapsed ? '' : 'mr-2 shrink-0'} />
+          <LogOut size={18} className={isCollapsed ? '' : 'mr-2'} />
           {!isCollapsed && 'Keluar'}
         </Button>
       </div>

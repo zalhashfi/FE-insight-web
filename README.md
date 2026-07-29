@@ -1,44 +1,106 @@
-# Insight Laboratory - Frontend
+# Insight Web Frontend
 
-Sistem monitoring dan manajemen perangkat IoT "Biru Langit" - Antarmuka Pengguna.
+A modern, highly-interactive web frontend built with React, Vite, and TypeScript. This project features robust 3D visualizations, sleek UI components, and performant data fetching.
 
-## Teknologi Utama
-- **Framework:** React 19 dengan Vite
-- **Routing:** React Router v7
-- **State Management:** TanStack React Query v5
-- **Styling:** TailwindCSS v4 dengan Oklch colors
-- **Komponen:** Shadcn UI (Radix Primitives)
-- **Animasi 3D:** Three.js (@react-three/fiber, @react-three/drei)
-- **Visualisasi Data:** Recharts
+## Key Features
 
-## Fitur
-1. **Authentication:** JWT HttpOnly cookie-based auth dengan Role-Based Access Control (Admin, Engineer, User).
-2. **Landing Page:** Halaman depan dengan animasi 3D interaktif.
-3. **Dashboard:** Ringkasan jumlah alat, perangkat yang belum terdaftar, dan data terakhir masuk.
-4. **Manajemen Alat (Stations):** CRUD alat, registrasi otomatis untuk perangkat baru (unregistered devices).
-5. **Data Sensor (Telemetry):** Visualisasi grafik *real-time* dengan opsi agregasi (2 menit, 1 jam, harian) dan riwayat data tabular.
-6. **Manajemen Pengguna:** CRUD user (Hanya Admin).
-7. **Firmware (OTA):** Manajemen rilis firmware OTA untuk alat (Hanya Admin & Engineer).
-8. **Manajemen Tiket:** Pelaporan kendala/maintenance alat.
+- **Dynamic Routing** with React Router 7
+- **3D Renderings** powered by Three.js and React Three Fiber
+- **Modern UI Components** using Shadcn, Lucide React, and Tailwind CSS v4
+- **Optimized Data Fetching** with TanStack React Query
+- **Lightning-fast Dev Environment** with Vite
 
-## Struktur Direktori Utama
-- `src/components/` - Komponen UI *reusable* (terutama Shadcn UI) dan Layout
-- `src/contexts/` - React Context (AuthContext)
-- `src/lib/` - Utilities seperti `apiFetch` (global 401 interceptor)
-- `src/pages/` - Halaman-halaman rute utama (Dashboard, StationList, TelemetryList, dll)
-- `src/utils/` - Helper tambahan (logger)
+## Tech Stack
 
-## Instalasi & Menjalankan (Development)
+- **Language**: TypeScript
+- **Framework**: React 19
+- **Build Tool**: Vite 8
+- **Styling**: Tailwind CSS 4
+- **State Management / Data Fetching**: TanStack Query
+- **Routing**: React Router 7
+- **Testing**: Vitest, React Testing Library
+- **Linting**: Oxlint
+
+## Prerequisites
+
+- Node.js 20 or higher
+- npm (or pnpm/yarn)
+
+## Getting Started
+
+### 1. Clone the Repository
+
 ```bash
-# Install dependencies
-npm install
+git clone https://github.com/zalhashfi/FE-insight-web.git
+cd FE-insight-web
+```
 
-# Jalankan development server
+### 2. Install Dependencies
+
+```bash
+npm install
+```
+
+### 3. Environment Setup
+
+Copy the example environment file if provided, or create a `.env.local` to define environment-specific variables like API endpoints.
+
+```bash
+touch .env.local
+```
+
+### 4. Start Development Server
+
+```bash
 npm run dev
 ```
 
-## Build & Deployment
-Aplikasi ini sudah dipisahkan dari backend dan menggunakan proxy Vite `/api` di tahap *development*. Untuk *production*, pastikan *web server* diatur untuk melakukan *routing fallback* ke `index.html`.
+Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+## Available Scripts
+
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Start Vite dev server |
+| `npm run build` | Compile TypeScript and build for production |
+| `npm run lint` | Run Oxlint for fast code linting |
+| `npm run preview` | Preview the production build locally |
+
+## Testing
+
+This project uses Vitest for unit and component testing.
+
 ```bash
+# Run tests
+npx vitest
+
+# Run with UI
+npx vitest --ui
+```
+
+## Deployment
+
+The app can be easily deployed to modern static hosting platforms like Cloudflare Pages (suggested by the presence of `.wrangler`), Vercel, or Netlify.
+
+### Cloudflare Pages
+
+```bash
+# Assuming Wrangler CLI is installed
 npm run build
+npx wrangler pages deploy dist
+```
+
+## Architecture & Directory Structure
+
+```
+├── public/         # Static assets that bypass Vite compilation
+├── src/            # Source code
+│   ├── components/ # Reusable UI components
+│   ├── hooks/      # Custom React hooks
+│   ├── pages/      # Route-level components
+│   ├── lib/        # Utilities (e.g., Shadcn utils)
+│   ├── App.tsx     # Main application root component
+│   └── main.tsx    # Application entry point
+├── dist/           # Production build output
+└── functions/      # Edge functions (if using Cloudflare Pages)
 ```
