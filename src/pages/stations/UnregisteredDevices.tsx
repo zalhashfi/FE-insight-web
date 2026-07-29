@@ -1,15 +1,17 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, Plus, RefreshCw } from 'lucide-react';
+import { AlertCircle, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router';
+import { TableSkeleton } from '@/components/ui/skeleton';
+import { useState } from 'react';
+import { AddStationDialog } from './AddStationDialog';
+import { apiFetch } from '@/lib/api';
 
 // API Fetcher
 const fetchUnregisteredDevices = async () => {
-  const res = await fetch('/api/stations/unregistered', {
-    credentials: 'include'
-  });
+  const res = await apiFetch('/api/stations/unregistered');
   
   if (!res.ok) {
     throw new Error('Failed to fetch unregistered devices');
@@ -19,6 +21,8 @@ const fetchUnregisteredDevices = async () => {
 
 export const UnregisteredDevices = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [registerMac, setRegisterMac] = useState<string | null>(null);
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['unregisteredDevices'],
@@ -26,9 +30,20 @@ export const UnregisteredDevices = () => {
     refetchInterval: 30000 // auto refresh every 30s
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (macAddress: string) => {
+      const res = await apiFetch(`/api/stations/unregistered/${macAddress}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error('Failed to delete');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['unregisteredDevices'] });
+    }
+  });
+
   const handleRegister = (macAddress: string) => {
-    // Navigate to add station page with pre-filled mac address
-    navigate(`/stations/add?mac=${macAddress}`);
+    setRegisterMac(macAddress);
   };
 
   return (
@@ -63,7 +78,7 @@ export const UnregisteredDevices = () => {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="flex justify-center p-8">Loading...</div>
+              <TableSkeleton rows={3} cols={3} />
             ) : data?.data && data.data.length > 0 ? (
               <Table>
                 <TableHeader>
@@ -78,9 +93,21 @@ export const UnregisteredDevices = () => {
                     <TableRow key={device.macAddress}>
                       <TableCell className="font-mono">{device.macAddress}</TableCell>
                       <TableCell>{new Date(device.lastSeenAt).toLocaleString()}</TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right space-x-2">
                         <Button size="sm" onClick={() => handleRegister(device.macAddress)}>
                           <Plus className="mr-1 h-4 w-4" /> Register
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="destructive" 
+                          onClick={() => {
+                            if (window.confirm('Are you sure you want to delete this unregistered device?')) {
+                              deleteMutation.mutate(device.macAddress);
+                            }
+                          }}
+                          disabled={deleteMutation.isPending}
+                        >
+                          <Trash2 className="mr-1 h-4 w-4" /> Delete
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -95,6 +122,16 @@ export const UnregisteredDevices = () => {
           </CardContent>
         </Card>
       )}
+
+      <AddStationDialog 
+        macAddress={registerMac || ''} 
+        open={!!registerMac} 
+        onOpenChange={(open) => !open && setRegisterMac(null)} 
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['unregisteredDevices'] });
+          navigate('/stations');
+        }}
+      />
     </div>
   );
 };
