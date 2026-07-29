@@ -1,30 +1,34 @@
-# Insight Web Frontend
+# Insight Lab - Frontend (UI)
 
-A modern, highly-interactive web frontend built with React, Vite, and TypeScript. This project features robust 3D visualizations, sleek UI components, and performant data fetching.
+Frontend Web Dashboard untuk platform pemantauan **Insight Lab**, dibangun dengan React 19 dan Vite, menggunakan arsitektur komponen modern dengan Shadcn UI dan Tailwind CSS v4. Dashboard ini menampilkan data telemetri real-time, manajemen perangkat (stasiun), manajemen akses (user), serta fitur dukungan seperti pembaruan firmware dan tiket pemeliharaan.
+
+Repository Backend (API): [BE-insight-web](https://github.com/zalhashfi/BE-insight-web)
 
 ## Key Features
 
-- **Dynamic Routing** with React Router 7
-- **3D Renderings** powered by Three.js and React Three Fiber
-- **Modern UI Components** using Shadcn, Lucide React, and Tailwind CSS v4
-- **Optimized Data Fetching** with TanStack React Query
-- **Lightning-fast Dev Environment** with Vite
+- **Dashboard Analitik**: Tampilan interaktif dengan animasi Three.js pada Landing Page.
+- **Data Sensor Real-time**: Menggunakan TanStack React Query (`staleTime: 0`) agar tampilan sensor dan telemetri bebas *stale data* dengan skeleton loading yang mulus.
+- **Manajemen Alat & User**: Antarmuka CRUD penuh untuk pengaturan Alat dan Pengguna dengan proteksi role-based (Admin, Engineer).
+- **Firmware & Tiket**: Halaman pengelolaan firmware untuk OTA update dan pembuatan tiket maintenance perangkat.
+- **Autentikasi Aman**: Integrasi transparan dengan HttpOnly JWT cookie dari Backend, tanpa menyimpan token di localStorage.
+- **Modern UI**: Penggunaan *Geist Variable* font, komponen aksesibel dari Shadcn UI, dan transisi fluid.
 
 ## Tech Stack
 
-- **Language**: TypeScript
+- **Language**: TypeScript (Node.js)
 - **Framework**: React 19
-- **Build Tool**: Vite 8
-- **Styling**: Tailwind CSS 4
-- **State Management / Data Fetching**: TanStack Query
-- **Routing**: React Router 7
-- **Testing**: Vitest, React Testing Library
-- **Linting**: Oxlint
+- **Build Tool**: Vite
+- **Routing**: React Router v7
+- **State/Data Fetching**: TanStack React Query v5
+- **Styling**: Tailwind CSS v4
+- **UI Components**: Shadcn UI (Radix UI) & Lucide Icons
+- **3D Graphics**: Three.js (@react-three/fiber, @react-three/drei)
 
 ## Prerequisites
 
-- Node.js 20 or higher
-- npm (or pnpm/yarn)
+- Node.js 20+
+- npm atau pnpm
+- [Backend API (BE-insight-web)](https://github.com/zalhashfi/BE-insight-web) harus sudah berjalan.
 
 ## Getting Started
 
@@ -43,11 +47,17 @@ npm install
 
 ### 3. Environment Setup
 
-Copy the example environment file if provided, or create a `.env.local` to define environment-specific variables like API endpoints.
+Karena aplikasi ini menggunakan Vite Proxy di development, Anda tidak perlu repot mengubah `.env` secara manual jika Backend berjalan di domain default. Namun, jika diperlukan, siapkan `.env`:
 
 ```bash
-touch .env.local
+cp .env.example .env
 ```
+
+| Variable           | Description                  | Default                                      |
+| ------------------ | ---------------------------- | -------------------------------------------- |
+| `VITE_API_URL`     | URL Backend API              | `https://backend.rizalhashfi.workers.dev`    |
+
+*(Catatan: Konfigurasi default `vite.config.ts` sudah mengatur proksi `/api` ke worker backend)*
 
 ### 4. Start Development Server
 
@@ -55,52 +65,90 @@ touch .env.local
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) in your browser.
+Buka `http://localhost:5173` di browser Anda.
+
+---
+
+## Architecture
+
+### Directory Structure
+
+```
+├── src/
+│   ├── components/
+│   │   ├── layout/       # ProtectedRoute, DashboardLayout
+│   │   ├── three/        # NetworkBackground untuk Three.js
+│   │   └── ui/           # Komponen reusable dari Shadcn (Button, Card, Skeleton, dll)
+│   ├── contexts/
+│   │   └── AuthContext.tsx # Manajemen state sesi JWT
+│   ├── lib/
+│   │   └── utils.ts      # Tailwind class merger (cn)
+│   ├── pages/
+│   │   ├── auth/         # LoginPage
+│   │   ├── firmware/     # FirmwarePage
+│   │   ├── profile/      # ProfilePage
+│   │   ├── stations/     # StationList, AddStationDialog, UnregisteredDevices
+│   │   ├── telemetry/    # TelemetryList
+│   │   ├── tickets/      # TicketList
+│   │   ├── users/        # UserList
+│   │   ├── DashboardHome.tsx
+│   │   ├── LandingPage.tsx
+│   │   └── NotFoundPage.tsx
+│   ├── App.tsx           # Setup Routes & React Query Provider
+│   ├── index.css         # Tailwind directives & CSS Variables Oklch
+│   └── main.tsx          # React Entry Point
+├── vite.config.ts        # Konfigurasi Vite & Proxy
+└── package.json          # Dependensi
+```
+
+### Data Flow & State Management
+
+1. **Routing**: Dikelola oleh React Router. Rute dengan akses terbatas dibungkus dengan komponen `<ProtectedRoute />`.
+2. **Authentication**: `AuthContext` menampung state login (tanpa menyimpan token) dengan membaca data dari API. Semua fetch request memanggil `credentials: 'include'`.
+3. **Data Fetching**: Dikelola oleh TanStack Query.
+   - Digunakan untuk caching selektif, refetch otomatis, dan handling state loading/error.
+   - Konfigurasi default diset ke `staleTime: 0` agar UI memprioritaskan penyajian skeleton sementara fetch background dijalankan demi data *fresh*.
+4. **UI Styling**: Tailwind CSS dikombinasikan dengan class-variance-authority (`cva`) dan `clsx` dalam library `shadcn/ui`.
+
+---
 
 ## Available Scripts
 
-| Command | Description |
-| --- | --- |
-| `npm run dev` | Start Vite dev server |
-| `npm run build` | Compile TypeScript and build for production |
-| `npm run lint` | Run Oxlint for fast code linting |
-| `npm run preview` | Preview the production build locally |
+| Command                       | Description                                         |
+| ----------------------------- | --------------------------------------------------- |
+| `npm run dev`                 | Start Vite dev server dengan proxy ke backend       |
+| `npm run build`               | Compile TypeScript dan Build production bundle      |
+| `npm run lint`                | Jalankan Oxlint untuk analisis statis kode          |
+| `npm run preview`             | Preview hasil build production di lokal             |
 
-## Testing
-
-This project uses Vitest for unit and component testing.
-
-```bash
-# Run tests
-npx vitest
-
-# Run with UI
-npx vitest --ui
-```
+---
 
 ## Deployment
 
-The app can be easily deployed to modern static hosting platforms like Cloudflare Pages (suggested by the presence of `.wrangler`), Vercel, or Netlify.
+Aplikasi ini dapat di-deploy ke berbagai platform static hosting seperti **Vercel**, **Netlify**, atau **Cloudflare Pages**. 
 
-### Cloudflare Pages
+Contoh menggunakan **Cloudflare Pages**:
 
-```bash
-# Assuming Wrangler CLI is installed
-npm run build
-npx wrangler pages deploy dist
-```
+1. Login ke Cloudflare Dashboard.
+2. Buat proyek Pages baru dari Git (hubungkan ke repo GitHub ini).
+3. Set build configuration:
+   - Framework preset: **Vite**
+   - Build command: `npm run build`
+   - Build output directory: `dist`
+4. Deploy!
 
-## Architecture & Directory Structure
+*Penting: Karena backend mengandalkan HttpOnly cookie untuk JWT, pastikan domain Frontend dan Backend Anda mendukung CORS dan Credentials dengan benar di level produksi (biasanya direkomendasikan berjalan pada subdomain yang sama atau apex domain yang sama).*
 
-```
-├── public/         # Static assets that bypass Vite compilation
-├── src/            # Source code
-│   ├── components/ # Reusable UI components
-│   ├── hooks/      # Custom React hooks
-│   ├── pages/      # Route-level components
-│   ├── lib/        # Utilities (e.g., Shadcn utils)
-│   ├── App.tsx     # Main application root component
-│   └── main.tsx    # Application entry point
-├── dist/           # Production build output
-└── functions/      # Edge functions (if using Cloudflare Pages)
-```
+---
+
+## Troubleshooting
+
+### CORS / API Error di Lokal
+**Error:** Tidak bisa login / data tidak muncul di localhost.
+**Solution:**
+Pastikan Backend Worker berjalan dan `vite.config.ts` proksinya mengarah ke URL backend yang tepat. Jika menggunakan URL production backend (`*.workers.dev`), browser mungkin akan memblokir *third-party cookie*. Sangat disarankan menjalankan Backend secara lokal (`npm run dev` pada BE) dan mengubah target proxy di `vite.config.ts` ke `http://localhost:8787`.
+
+### Skeleton Loading Tampil Terus Menerus
+**Error:** Layar tersangkut di animasi skeleton.
+**Solution:**
+Periksa tab Network di browser. Kemungkinan API mengembalikan HTTP 500 atau 401 dan tidak ada error boundary yang menangkapnya. Cek log pada Backend Worker untuk debugging lebih lanjut.
