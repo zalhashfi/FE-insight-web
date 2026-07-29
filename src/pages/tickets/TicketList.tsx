@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ShieldAlert, TicketPlus, Edit } from 'lucide-react';
 import { TableSkeleton } from '@/components/ui/skeleton';
+import { apiFetch } from '@/lib/api';
 
 type Ticket = {
   id: number;
@@ -38,36 +39,34 @@ type Station = {
 };
 
 async function fetchTickets(): Promise<Ticket[]> {
-  const res = await fetch('/api/tickets', { credentials: 'include' });
+  const res = await apiFetch('/api/tickets');
   if (!res.ok) throw new Error('Failed to fetch tickets');
   const data = await res.json();
   return data.tickets || [];
 }
 
 async function fetchStations(): Promise<Station[]> {
-  const res = await fetch('/api/stations', { credentials: 'include' });
+  const res = await apiFetch('/api/stations');
   if (!res.ok) throw new Error('Failed to fetch stations');
   const data = await res.json();
   return data.stations || [];
 }
 
 async function createTicket(data: { stationUuid: string; issueTitle: string; issueDescription: string }) {
-  const res = await fetch('/api/tickets', {
+  const res = await apiFetch('/api/tickets', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
-    credentials: 'include',
   });
   if (!res.ok) throw new Error('Failed to create ticket');
   return res.json();
 }
 
 async function updateTicket(data: { id: number; payload: { status: string; actionTaken: string } }) {
-  const res = await fetch(`/api/tickets/${data.id}`, {
+  const res = await apiFetch(`/api/tickets/${data.id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data.payload),
-    credentials: 'include',
   });
   if (!res.ok) throw new Error('Failed to update ticket');
   return res.json();

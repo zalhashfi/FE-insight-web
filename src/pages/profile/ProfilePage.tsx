@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Eye, EyeOff, User, Mail, Shield } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { apiFetch } from '@/lib/api';
 
 export function ProfilePage() {
   const { user } = useAuth();
@@ -46,11 +47,10 @@ export function ProfilePage() {
     
     setIsLoading(true);
     try {
-      const res = await fetch(`/api/users/${user.id}`, {
+      const res = await apiFetch(`/api/users/${user.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ oldPassword, newPassword }),
-        credentials: 'include',
       });
       
       if (!res.ok) {

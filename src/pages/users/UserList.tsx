@@ -21,8 +21,9 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Badge } from '../../components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { UserPlus, ShieldAlert, Eye, EyeOff, Edit, Trash2 } from 'lucide-react';
+import { UserPlus, ShieldAlert, Eye, EyeOff, Edit, Trash2, RefreshCw } from 'lucide-react';
 import { TableSkeleton } from '@/components/ui/skeleton';
+import { apiFetch } from '@/lib/api';
 
 type User = {
   id: number;
@@ -33,18 +34,17 @@ type User = {
 };
 
 async function fetchUsers(): Promise<User[]> {
-  const res = await fetch('/api/users', { credentials: 'include' });
+  const res = await apiFetch('/api/users');
   if (!res.ok) throw new Error('Failed to fetch users');
   const json = await res.json();
   return json.users || [];
 }
 
 async function createUser(data: any) {
-  const res = await fetch('/api/users', {
+  const res = await apiFetch('/api/users', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
-    credentials: 'include',
   });
   
   if (!res.ok) {
@@ -56,11 +56,10 @@ async function createUser(data: any) {
 
 async function updateUser(data: { id: number; fullName: string; role: string; newPassword?: string }) {
   const { id, ...body } = data;
-  const res = await fetch(`/api/users/${id}`, {
+  const res = await apiFetch(`/api/users/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
-    credentials: 'include',
   });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
@@ -70,9 +69,8 @@ async function updateUser(data: { id: number; fullName: string; role: string; ne
 }
 
 async function deleteUser(id: number) {
-  const res = await fetch(`/api/users/${id}`, {
+  const res = await apiFetch(`/api/users/${id}`, {
     method: 'DELETE',
-    credentials: 'include',
   });
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
@@ -107,7 +105,7 @@ export function UserList() {
   const [deleteUserObj, setDeleteUserObj] = useState<User | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState('');
 
-  const { data: users, isLoading, isError } = useQuery({
+  const { data: users, isLoading, isError, refetch, isRefetching } = useQuery({
     queryKey: ['users'],
     queryFn: fetchUsers,
     enabled: user?.role === 'admin',
@@ -216,10 +214,16 @@ export function UserList() {
           <p className="text-muted-foreground mt-1">Kelola daftar pengguna dan hak akses sistem.</p>
         </div>
         
-        <Button onClick={() => setIsOpen(true)}>
-          <UserPlus className="mr-2 h-4 w-4" />
-          Tambah Pengguna
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => refetch()} disabled={isRefetching}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${isRefetching ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Button onClick={() => setIsOpen(true)}>
+            <UserPlus className="mr-2 h-4 w-4" />
+            Tambah Pengguna
+          </Button>
+        </div>
       </div>
 
       <div className="border rounded-md bg-card">
