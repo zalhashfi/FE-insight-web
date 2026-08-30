@@ -19,7 +19,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://backend.rizalhashfi.workers.dev',
+        target: 'http://localhost:3000',
         changeOrigin: true,
       },
     },
