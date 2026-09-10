@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { useNavigate, Navigate } from 'react-router';
+import { useNavigate, Navigate, Link } from 'react-router';
 import { useAuth } from '../../contexts/AuthContext';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '../../components/ui/card';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Button } from '../../components/ui/button';
-import { Loader2, Eye, EyeOff } from 'lucide-react';
+import { ThemeToggle } from '../../components/ui/ThemeToggle';
+import { Loader2, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
@@ -41,13 +42,21 @@ export function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 p-4 dark:bg-zinc-950">
+    <div className="relative flex min-h-screen items-center justify-center bg-zinc-50 p-4 dark:bg-zinc-950">
+      <div className="absolute top-4 right-4 flex items-center gap-2">
+        <ThemeToggle />
+      </div>
+
       <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
+        <div className="text-center space-y-2">
+          <Link to="/" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-2">
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Kembali ke Beranda
+          </Link>
           <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
             Insight Laboratory
           </h1>
-          <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
             Sign in to your account
           </p>
         </div>

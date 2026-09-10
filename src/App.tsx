@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 import LandingPage from './pages/LandingPage';
@@ -18,30 +19,32 @@ const queryClient = new QueryClient();
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <BrowserRouter>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            
-            {/* Protected routes */}
-            <Route element={<ProtectedRoute />}>
-              <Route element={<DashboardLayout />}>
-                <Route path="/dashboard" element={<DashboardHome />} />
-                <Route path="/stations" element={<StationList />} />
-                <Route path="/stations/unregistered" element={<UnregisteredDevices />} />
-                <Route path="/telemetry" element={<TelemetryList />} />
-                <Route path="/firmware" element={<FirmwarePage />} />
-                <Route path="/users" element={<UserList />} />
+      <ThemeProvider defaultTheme="system" storageKey="insight_theme">
+        <AuthProvider>
+          <BrowserRouter>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              
+              {/* Protected routes */}
+              <Route element={<ProtectedRoute />}>
+                <Route element={<DashboardLayout />}>
+                  <Route path="/dashboard" element={<DashboardHome />} />
+                  <Route path="/stations" element={<StationList />} />
+                  <Route path="/stations/unregistered" element={<UnregisteredDevices />} />
+                  <Route path="/telemetry" element={<TelemetryList />} />
+                  <Route path="/firmware" element={<FirmwarePage />} />
+                  <Route path="/users" element={<UserList />} />
+                </Route>
               </Route>
-            </Route>
-            
-            {/* 404 */}
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </BrowserRouter>
-      </AuthProvider>
+              
+              {/* 404 */}
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </BrowserRouter>
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
