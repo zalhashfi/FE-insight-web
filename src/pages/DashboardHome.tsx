@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../co
 import { Radio, AlertCircle, Clock, Activity } from 'lucide-react';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '../components/ui/chart';
 import { Line, LineChart, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { apiFetch } from '@/lib/api';
 
 type Station = {
   id: string;
@@ -13,14 +14,14 @@ type Station = {
 };
 
 async function fetchStations(): Promise<Station[]> {
-  const res = await fetch('/api/stations', { credentials: 'include' });
-  if (!res.ok) throw new Error('Failed to fetch stations');
+  const res = await apiFetch('/api/devices');
+  if (!res.ok) throw new Error('Failed to fetch devices');
   const json = await res.json();
-  return json.stations || [];
+  return json.devices || json.stations || [];
 }
 
 async function fetchUnregistered() {
-  const res = await fetch('/api/stations/unregistered', { credentials: 'include' });
+  const res = await apiFetch('/api/devices/unregistered');
   if (!res.ok) throw new Error('Failed to fetch unregistered devices');
   const json = await res.json();
   return json.data || [];

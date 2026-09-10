@@ -4,12 +4,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { AlertCircle, Plus, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router';
+import { apiFetch } from '@/lib/api';
 
 // API Fetcher
 const fetchUnregisteredDevices = async () => {
-  const res = await fetch('/api/stations/unregistered', {
-    credentials: 'include'
-  });
+  const res = await apiFetch('/api/devices/unregistered');
   
   if (!res.ok) {
     throw new Error('Failed to fetch unregistered devices');

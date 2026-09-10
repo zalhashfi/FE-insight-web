@@ -9,9 +9,8 @@ import {
 } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AddStationDialog } from './AddStationDialog';
-
-import { logToCloudflare } from '@/utils/logger';
 import { Badge } from '@/components/ui/badge';
+import { apiFetch } from '@/lib/api';
 
 type Station = {
   uuid: string;
@@ -25,15 +24,12 @@ type Station = {
 };
 
 async function fetchStations(): Promise<Station[]> {
-  const res = await fetch('/api/stations', {
-    credentials: 'include'
-  });
+  const res = await apiFetch('/api/devices');
   if (!res.ok) {
-    logToCloudflare('error', 'Failed to fetch stations', { status: res.status });
-    throw new Error('Failed to fetch stations');
+    throw new Error('Failed to fetch devices');
   }
   const data = await res.json();
-  return data.stations;
+  return data.devices || data.stations || [];
 }
 
 export function StationList() {
