@@ -18,7 +18,7 @@ export function Footer() {
               <img src="/BIRULANGIT.svg" alt="Biru Langit" className="h-7 w-auto" />
             </Link>
             <p className="text-sm text-muted-foreground max-w-sm leading-relaxed">
-              Insight Laboratory adalah platform pemantauan telemetri IoT untuk mendukung pemantauan udara bersih, riset lingkungan, dan pertanian terukur.
+              <strong>INSIGHT Lab</strong> (Innovation and Sustainability for Geo-Environmental Health Laboratorium) adalah platform pemantauan telemetri IoT untuk mendukung riset lingkungan hidup dan udara bersih.
             </p>
           </div>
 
@@ -36,16 +36,12 @@ export function Footer() {
               <li><Link to="/login" className="hover:text-foreground transition-colors">Halaman Masuk</Link></li>
               <li><Link to="/stations" className="hover:text-foreground transition-colors">Daftar Perangkat</Link></li>
               <li><Link to="/telemetry" className="hover:text-foreground transition-colors">Riwayat Sensor</Link></li>
-              <li><a href="https://github.com/zalhashfi/FE-insight-web" target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors">Repositori GitHub</a></li>
             </ul>
           </div>
         </div>
 
         <div className="pt-8 border-t border-border/40 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
           <p>© {new Date().getFullYear()} Biru Langit. Hak cipta dilindungi.</p>
-          <div className="flex items-center gap-6">
-            <span>FE-insight-web v1.0</span>
-          </div>
         </div>
       </div>
     </footer>
