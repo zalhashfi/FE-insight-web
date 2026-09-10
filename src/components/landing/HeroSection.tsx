@@ -4,8 +4,16 @@ import { ArrowRight, BarChart3 } from 'lucide-react';
 import NetworkBackground from '@/components/three/NetworkBackground';
 
 export function HeroSection() {
+  const handleScrollToTelemetry = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const element = document.getElementById('telemetry');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
-    <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden pt-12 pb-20">
+    <section className="relative min-h-[75vh] flex items-center justify-center overflow-hidden pt-12 pb-16">
       <NetworkBackground />
 
       <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
@@ -37,31 +45,12 @@ export function HeroSection() {
             </Button>
           </Link>
 
-          <a href="#telemetry" className="w-full sm:w-auto">
+          <a href="#telemetry" onClick={handleScrollToTelemetry} className="w-full sm:w-auto">
             <Button size="lg" variant="outline" className="w-full sm:w-auto h-12 px-8 text-base font-semibold backdrop-blur-sm">
               <BarChart3 className="mr-2 h-4 w-4 text-primary" />
               Lihat Data Sensor
             </Button>
           </a>
-        </div>
-
-        <div className="pt-12 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto border-t border-border/40 text-left">
-          <div className="p-3 rounded-lg bg-card/40 backdrop-blur-sm border border-border/30">
-            <div className="text-2xl font-bold text-foreground font-mono">99.9%</div>
-            <div className="text-xs text-muted-foreground">Ketersediaan Jaringan</div>
-          </div>
-          <div className="p-3 rounded-lg bg-card/40 backdrop-blur-sm border border-border/30">
-            <div className="text-2xl font-bold text-primary font-mono">&lt; 1 detik</div>
-            <div className="text-xs text-muted-foreground">Latensi Penerimaan Data</div>
-          </div>
-          <div className="p-3 rounded-lg bg-card/40 backdrop-blur-sm border border-border/30">
-            <div className="text-2xl font-bold text-foreground font-mono">AQMS & SOC</div>
-            <div className="text-xs text-muted-foreground">Tipe Perangkat Didukung</div>
-          </div>
-          <div className="p-3 rounded-lg bg-card/40 backdrop-blur-sm border border-border/30">
-            <div className="text-2xl font-bold text-primary font-mono">OTA</div>
-            <div className="text-xs text-muted-foreground">Pembaruan Jarak Jauh</div>
-          </div>
         </div>
       </div>
     </section>

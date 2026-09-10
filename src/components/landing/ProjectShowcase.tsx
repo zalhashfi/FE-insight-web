@@ -6,23 +6,16 @@ export function ProjectShowcase() {
   return (
     <section id="proyek" className="py-20 bg-muted/30 border-t border-border/40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div className="space-y-3 max-w-2xl">
-            <Badge variant="outline" className="px-3 py-1 text-xs uppercase tracking-wider text-primary border-primary/30">
-              Studi Kasus Lapangan
-            </Badge>
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
-              Implementasi di SMP Telkom
-            </h2>
-            <p className="text-muted-foreground text-base">
-              Pemasangan unit sensor pemantau udara dan sistem peringatan dini berbasis aktivitas warga sekolah.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground bg-card/60 p-2.5 rounded-lg border border-border/40">
-            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-            <span>Status: Fase Persiapan & Instalasi</span>
-          </div>
+        <div className="space-y-3 max-w-2xl">
+          <Badge variant="outline" className="px-3 py-1 text-xs uppercase tracking-wider text-primary border-primary/30">
+            Studi Kasus Lapangan
+          </Badge>
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
+            Implementasi di SMP Telkom
+          </h2>
+          <p className="text-muted-foreground text-base">
+            Pemasangan unit sensor pemantau udara dan sistem peringatan dini berbasis aktivitas warga sekolah.
+          </p>
         </div>
 
         <div className="grid lg:grid-cols-12 gap-8 items-stretch">

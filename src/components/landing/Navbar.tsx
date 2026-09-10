@@ -2,6 +2,14 @@ import { Link } from 'react-router';
 import { Button } from '@/components/ui/button';
 
 export function Navbar() {
+  const scrollTo = (id: string) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
       <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -22,19 +30,13 @@ export function Navbar() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-muted-foreground">
-          <a href="#solusi" className="hover:text-foreground transition-colors">
-            Solusi
-          </a>
-          <a href="#proyek" className="hover:text-foreground transition-colors">
+          <a href="#proyek" onClick={scrollTo('proyek')} className="hover:text-foreground transition-colors cursor-pointer">
             Studi Kasus
           </a>
-          <a href="#telemetry" className="hover:text-foreground transition-colors">
-            Telemetri
+          <a href="#telemetry" onClick={scrollTo('telemetry')} className="hover:text-foreground transition-colors cursor-pointer">
+            Data Telemetri
           </a>
-          <a href="#fitur" className="hover:text-foreground transition-colors">
-            Fitur
-          </a>
-          <a href="#tentang" className="hover:text-foreground transition-colors">
+          <a href="#tentang" onClick={scrollTo('tentang')} className="hover:text-foreground transition-colors cursor-pointer">
             Tentang
           </a>
         </nav>
@@ -49,7 +51,7 @@ export function Navbar() {
           </div>
 
           <Link to="/login">
-            <Button size="sm" className="font-semibold shadow-sm">
+            <Button size="sm" className="font-semibold shadow-sm cursor-pointer">
               Masuk ke Dashboard
             </Button>
           </Link>
