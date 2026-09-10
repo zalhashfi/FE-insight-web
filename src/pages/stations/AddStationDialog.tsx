@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { logToCloudflare } from '@/utils/logger';
+import { apiFetch } from '@/lib/api';
 
 export function AddStationDialog() {
   const [open, setOpen] = useState(false);
@@ -43,24 +43,23 @@ export function AddStationDialog() {
       const payload = {
         uuid: crypto.randomUUID(),
         name: data.name,
-        projectName: data.projectName,
+        project_name: data.projectName,
         type: data.type,
-        ...(data.macAddress ? { macAddress: data.macAddress } : {}),
+        ...(data.macAddress ? { mac_address: data.macAddress } : {}),
         ...(data.latitude ? { latitude: parseFloat(data.latitude) } : {}),
         ...(data.longitude ? { longitude: parseFloat(data.longitude) } : {})
       };
       
-      const res = await fetch('/api/stations', {
+      const res = await apiFetch('/api/devices', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        credentials: 'include',
         body: JSON.stringify(payload)
       });
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || 'Failed to add station');
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to add device');
       }
       return res.json();
     },
@@ -79,7 +78,6 @@ export function AddStationDialog() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    logToCloudflare('info', 'User attempted to add a station', { action: 'add_station', formData });
     mutation.mutate(formData);
   };
 
