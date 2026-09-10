@@ -10,36 +10,35 @@ export function Footer() {
               <img src="/BIRULANGIT.svg" alt="Biru Langit" className="h-7 w-auto" />
             </Link>
             <p className="text-sm text-muted-foreground max-w-sm leading-relaxed">
-              <strong>Insight Laboratory</strong> adalah ekosistem pemantauan lingkungan IoT berbasis cloud untuk mendukung inisiatif udara bersih, pertanian berkelanjutan, dan analitik presisi.
+              Insight Laboratory adalah platform pemantauan telemetri IoT untuk mendukung pemantauan udara bersih, riset lingkungan, dan pertanian terukur.
             </p>
           </div>
 
           <div className="space-y-3">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground">Solusi & Sistem</h4>
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground">Sistem & Solusi</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><a href="#solusi" className="hover:text-foreground transition-colors">AQMS (Air Quality)</a></li>
-              <li><a href="#solusi" className="hover:text-foreground transition-colors">SOC (Soil & Agri)</a></li>
-              <li><a href="#proyek" className="hover:text-foreground transition-colors">PENGMAS SMP Telkom</a></li>
-              <li><a href="#telemetry" className="hover:text-foreground transition-colors">Live Telemetry</a></li>
-              <li><a href="#fitur" className="hover:text-foreground transition-colors">OTA Firmware Engine</a></li>
+              <li><a href="#solusi" className="hover:text-foreground transition-colors">Stasiun AQMS (Udara)</a></li>
+              <li><a href="#solusi" className="hover:text-foreground transition-colors">Stasiun SOC (Tanah)</a></li>
+              <li><a href="#proyek" className="hover:text-foreground transition-colors">Pemasangan SMP Telkom</a></li>
+              <li><a href="#telemetry" className="hover:text-foreground transition-colors">Data Telemetri</a></li>
             </ul>
           </div>
 
           <div className="space-y-3">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground">Akses Platform</h4>
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground">Akses Dashboard</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link to="/login" className="hover:text-foreground transition-colors">Masuk ke Dashboard</Link></li>
-              <li><Link to="/stations" className="hover:text-foreground transition-colors">Daftar Stasiun Alat</Link></li>
-              <li><Link to="/telemetry" className="hover:text-foreground transition-colors">Data Riwayat Sensor</Link></li>
-              <li><a href="https://github.com/zalhashfi/FE-insight-web" target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors">GitHub Repository</a></li>
+              <li><Link to="/login" className="hover:text-foreground transition-colors">Halaman Masuk</Link></li>
+              <li><Link to="/stations" className="hover:text-foreground transition-colors">Daftar Perangkat</Link></li>
+              <li><Link to="/telemetry" className="hover:text-foreground transition-colors">Riwayat Sensor</Link></li>
+              <li><a href="https://github.com/zalhashfi/FE-insight-web" target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors">Repositori GitHub</a></li>
             </ul>
           </div>
         </div>
 
         <div className="pt-8 border-t border-border/40 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
-          <p>© {new Date().getFullYear()} Biru Langit. Hak Cipta Dilindungi.</p>
+          <p>© {new Date().getFullYear()} Biru Langit. Hak cipta dilindungi.</p>
           <div className="flex items-center gap-6">
-            <span>Powered by React 19, Vite, Three.js & Tailwind CSS</span>
+            <span>FE-insight-web v1.0</span>
           </div>
         </div>
       </div>

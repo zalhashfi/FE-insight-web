@@ -32,9 +32,9 @@ const aqmsConfig: ChartConfig = {
 };
 
 const socConfig: ChartConfig = {
-  soil_moisture: { label: 'Soil Moisture (%)', color: 'hsl(var(--chart-1))' },
+  soil_moisture: { label: 'Kelembapan Tanah (%)', color: 'hsl(var(--chart-1))' },
   temperature: { label: 'Suhu Tanah (°C)', color: 'hsl(var(--chart-2))' },
-  ph: { label: 'pH Level', color: 'hsl(var(--chart-3))' },
+  ph: { label: 'Tingkat pH', color: 'hsl(var(--chart-3))' },
 };
 
 export function LiveTelemetryPreview() {
@@ -48,18 +48,12 @@ export function LiveTelemetryPreview() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="space-y-2 max-w-2xl">
-            <div className="flex items-center gap-2">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
-              </span>
-              <span className="text-xs font-semibold uppercase tracking-wider text-primary">Interactive Preview</span>
-            </div>
+            <span className="text-xs font-semibold uppercase tracking-wider text-primary">Contoh Data Sensor</span>
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
-              Live Telemetri & Visualisasi Tren
+              Grafik Telemetri Lapangan
             </h2>
             <p className="text-muted-foreground text-sm sm:text-base">
-              Simulasi visual grafik real-time dari stasiun uji coba Insight Laboratory.
+              Grafik data pengukuran 24 jam terakhir dari stasiun AQMS dan SOC.
             </p>
           </div>
 
@@ -91,44 +85,43 @@ export function LiveTelemetryPreview() {
               <div>
                 <CardTitle className="text-xl flex items-center gap-2">
                   <Activity className="w-5 h-5 text-primary" />
-                  {activeTab === 'aqms' ? 'AQMS Stasiun Alpha (Surabaya Barat)' : 'SOC Stasiun Beta (Agro Substrat)'}
+                  {activeTab === 'aqms' ? 'AQMS Stasiun Alpha (Surabaya Barat)' : 'SOC Stasiun Beta (Kebun Percobaan)'}
                 </CardTitle>
                 <CardDescription className="font-mono text-xs mt-0.5">
-                  Device UUID: {activeTab === 'aqms' ? 'urn:uuid:8b3e2101-aqms-dev' : 'urn:uuid:4f2a7719-soc-dev'} | Protocol: MQTT / JSON
+                  ID Perangkat: {activeTab === 'aqms' ? 'urn:uuid:8b3e2101-aqms-dev' : 'urn:uuid:4f2a7719-soc-dev'}
                 </CardDescription>
               </div>
               <Link to="/login">
                 <Button size="sm" variant="outline" className="text-xs font-medium gap-1">
-                  Buka di Dashboard Penuh
+                  Buka Dashboard
                   <ArrowUpRight className="w-3.5 h-3.5" />
                 </Button>
               </Link>
             </div>
           </CardHeader>
           <CardContent className="pt-6 space-y-6">
-            {/* Metric preview chips */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {activeTab === 'aqms' ? (
                 <>
                   <div className="p-3 rounded-lg bg-muted/40 border border-border/40">
                     <span className="text-xs text-muted-foreground">PM 2.5 Terakhir</span>
                     <div className="text-2xl font-bold font-mono text-foreground">28 <span className="text-xs font-normal text-muted-foreground">µg/m³</span></div>
-                    <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-500/30 mt-1">Baik / Good</Badge>
+                    <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-500/30 mt-1">Normal</Badge>
                   </div>
                   <div className="p-3 rounded-lg bg-muted/40 border border-border/40">
                     <span className="text-xs text-muted-foreground">Suhu Udara</span>
                     <div className="text-2xl font-bold font-mono text-foreground">27.8 <span className="text-xs font-normal text-muted-foreground">°C</span></div>
-                    <span className="text-[10px] text-muted-foreground">Normal Ambient</span>
+                    <span className="text-[10px] text-muted-foreground">Suhu Lingkungan</span>
                   </div>
                   <div className="p-3 rounded-lg bg-muted/40 border border-border/40">
                     <span className="text-xs text-muted-foreground">Kelembapan</span>
                     <div className="text-2xl font-bold font-mono text-foreground">72 <span className="text-xs font-normal text-muted-foreground">%</span></div>
-                    <span className="text-[10px] text-muted-foreground">Optimal Range</span>
+                    <span className="text-[10px] text-muted-foreground">Normal</span>
                   </div>
                   <div className="p-3 rounded-lg bg-muted/40 border border-border/40">
                     <span className="text-xs text-muted-foreground">Karbon Monoksida</span>
                     <div className="text-2xl font-bold font-mono text-foreground">1.4 <span className="text-xs font-normal text-muted-foreground">ppm</span></div>
-                    <span className="text-[10px] text-emerald-600">Aman / Safe</span>
+                    <span className="text-[10px] text-emerald-600">Ambang Aman</span>
                   </div>
                 </>
               ) : (
@@ -136,28 +129,27 @@ export function LiveTelemetryPreview() {
                   <div className="p-3 rounded-lg bg-muted/40 border border-border/40">
                     <span className="text-xs text-muted-foreground">Kelembapan Tanah</span>
                     <div className="text-2xl font-bold font-mono text-foreground">68 <span className="text-xs font-normal text-muted-foreground">%</span></div>
-                    <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-500/30 mt-1">Lembab / Moist</Badge>
+                    <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-500/30 mt-1">Cukup Air</Badge>
                   </div>
                   <div className="p-3 rounded-lg bg-muted/40 border border-border/40">
                     <span className="text-xs text-muted-foreground">pH Tanah</span>
                     <div className="text-2xl font-bold font-mono text-foreground">6.9 <span className="text-xs font-normal text-muted-foreground">pH</span></div>
-                    <span className="text-[10px] text-muted-foreground">Netral / Ideal</span>
+                    <span className="text-[10px] text-muted-foreground">Kondisi Netral</span>
                   </div>
                   <div className="p-3 rounded-lg bg-muted/40 border border-border/40">
-                    <span className="text-xs text-muted-foreground">Suhu Substrat</span>
+                    <span className="text-xs text-muted-foreground">Suhu Tanah</span>
                     <div className="text-2xl font-bold font-mono text-foreground">25.0 <span className="text-xs font-normal text-muted-foreground">°C</span></div>
-                    <span className="text-[10px] text-muted-foreground">Optimal Root Zone</span>
+                    <span className="text-[10px] text-muted-foreground">Zona Akar</span>
                   </div>
                   <div className="p-3 rounded-lg bg-muted/40 border border-border/40">
                     <span className="text-xs text-muted-foreground">Status Irigasi</span>
-                    <div className="text-2xl font-bold font-mono text-foreground">HOLD</div>
-                    <span className="text-[10px] text-emerald-600">Kebutuhan Terpenuhi</span>
+                    <div className="text-2xl font-bold font-mono text-foreground">SIAGA</div>
+                    <span className="text-[10px] text-emerald-600">Terpenuhi</span>
                   </div>
                 </>
               )}
             </div>
 
-            {/* Recharts preview */}
             <div className="pt-2">
               <ChartContainer config={currentConfig} className="min-h-[300px] w-full">
                 <LineChart data={chartData as any}>
@@ -172,9 +164,9 @@ export function LiveTelemetryPreview() {
                       type="monotone"
                       dataKey={key}
                       stroke={config.color}
-                      strokeWidth={2.5}
-                      dot={{ r: 4 }}
-                      activeDot={{ r: 6 }}
+                      strokeWidth={2}
+                      dot={{ r: 3 }}
+                      activeDot={{ r: 5 }}
                     />
                   ))}
                 </LineChart>
