@@ -5,18 +5,18 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
       <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link to="/" className="flex items-center gap-3 group">
+        <Link to="/" className="flex items-center gap-3">
           <img 
             src="/BIRULANGIT.svg" 
-            alt="Biru Langit Logo" 
-            className="h-8 w-auto transition-transform group-hover:scale-105" 
+            alt="Biru Langit" 
+            className="h-8 w-auto" 
           />
           <div className="hidden sm:flex flex-col border-l border-border/60 pl-3">
             <span className="text-xs font-semibold tracking-wider text-foreground uppercase">
               Insight Laboratory
             </span>
             <span className="text-[10px] text-muted-foreground font-medium">
-              IoT Intelligence & Analytics
+              Sistem Telemetri & Analisis IoT
             </span>
           </div>
         </Link>
@@ -26,10 +26,10 @@ export function Navbar() {
             Solusi
           </a>
           <a href="#proyek" className="hover:text-foreground transition-colors">
-            Proyek PENGMAS
+            Studi Kasus
           </a>
           <a href="#telemetry" className="hover:text-foreground transition-colors">
-            Live Telemetri
+            Telemetri
           </a>
           <a href="#fitur" className="hover:text-foreground transition-colors">
             Fitur
@@ -45,7 +45,7 @@ export function Navbar() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
-            <span>Network Online</span>
+            <span>Jaringan Aktif</span>
           </div>
 
           <Link to="/login">
