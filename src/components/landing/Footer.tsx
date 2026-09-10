@@ -1,6 +1,14 @@
 import { Link } from 'react-router';
 
 export function Footer() {
+  const scrollTo = (id: string) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <footer id="tentang" className="border-t border-border/40 bg-card/60 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8">
@@ -17,10 +25,8 @@ export function Footer() {
           <div className="space-y-3">
             <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground">Sistem & Solusi</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><a href="#solusi" className="hover:text-foreground transition-colors">Stasiun AQMS (Udara)</a></li>
-              <li><a href="#solusi" className="hover:text-foreground transition-colors">Stasiun SOC (Tanah)</a></li>
-              <li><a href="#proyek" className="hover:text-foreground transition-colors">Pemasangan SMP Telkom</a></li>
-              <li><a href="#telemetry" className="hover:text-foreground transition-colors">Data Telemetri</a></li>
+              <li><a href="#proyek" onClick={scrollTo('proyek')} className="hover:text-foreground transition-colors cursor-pointer">Pemasangan SMP Telkom</a></li>
+              <li><a href="#telemetry" onClick={scrollTo('telemetry')} className="hover:text-foreground transition-colors cursor-pointer">Data Telemetri</a></li>
             </ul>
           </div>
 
