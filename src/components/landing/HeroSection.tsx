@@ -26,27 +26,27 @@ export function HeroSection() {
 
         <div className="space-y-4 max-w-4xl mx-auto">
           <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-foreground leading-[1.1]">
-            Pemantauan Data Sensor <br className="hidden sm:inline" />
+            Pemantauan Kualitas <br className="hidden sm:inline" />
             <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 bg-clip-text text-transparent">
-              Udara dan Tanah
+              Udara Lingkungan
             </span>
           </h1>
 
           <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto font-normal leading-relaxed">
-            Platform pengumpulan dan visualisasi data stasiun kualitas udara (AQMS) dan kondisi tanah (SOC) secara real-time dari Biru Langit.
+            Platform pengumpulan dan visualisasi data stasiun pemantau kualitas udara (AQMS) terpusat untuk analisis polutan mikroklimat secara real-time.
           </p>
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
           <Link to="/login" className="w-full sm:w-auto">
-            <Button size="lg" className="w-full sm:w-auto h-12 px-8 text-base font-semibold shadow-md">
+            <Button size="lg" className="w-full sm:w-auto h-12 px-8 text-base font-semibold shadow-md transition-transform hover:scale-105 active:scale-95">
               Buka Dashboard
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>
 
           <a href="#telemetry" onClick={handleScrollToTelemetry} className="w-full sm:w-auto">
-            <Button size="lg" variant="outline" className="w-full sm:w-auto h-12 px-8 text-base font-semibold backdrop-blur-sm">
+            <Button size="lg" variant="outline" className="w-full sm:w-auto h-12 px-8 text-base font-semibold backdrop-blur-sm transition-transform hover:scale-105 active:scale-95">
               <BarChart3 className="mr-2 h-4 w-4 text-primary" />
               Lihat Data Sensor
             </Button>

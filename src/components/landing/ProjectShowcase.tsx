@@ -38,7 +38,7 @@ export function ProjectShowcase() {
               </div>
 
               <CardDescription className="text-sm sm:text-base leading-relaxed">
-                Penempatan sensor memprioritaskan area dengan tingkat kepadatan aktivitas tinggi, terhubung dengan indikator visual kualitas udara untuk siswa dan guru.
+                Penempatan sensor memprioritaskan area dengan tingkat aktivitas siswa tinggi, terhubung dengan indikator visual kualitas udara luar ruangan.
               </CardDescription>
             </CardHeader>
 
@@ -50,7 +50,7 @@ export function ProjectShowcase() {
                     <span>Titik Indoor</span>
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Dipasang di Ruang Guru dan Ruang Kelas untuk memantau sirkulasi udara dan partikulat debu saat kegiatan belajar.
+                    Dipasang di Ruang Guru dan Ruang Kelas untuk memantau sirkulasi udara dan partikulat debu saat kegiatan belajar mengajar.
                   </p>
                 </div>
 
@@ -60,7 +60,7 @@ export function ProjectShowcase() {
                     <span>Titik Outdoor & EWS</span>
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Dipasang di area panggung sekolah dan depan gerbang, dilengkapi indikator bendera visual agar kondisi udara luar mudah dilihat.
+                    Dipasang pada atap sekolah untuk memantau kualitas udara luar. Dilengkapi peringatan dini agar status udara langsung terlihat.
                   </p>
                 </div>
               </div>
@@ -101,7 +101,7 @@ export function ProjectShowcase() {
                 </div>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Pelaksanaan dikoordinasikan langsung bersama Bagian Kemahasiswaan dan Sarana Prasarana sekolah untuk legalitas pemasangan, jalur daya listrik, dan perlindungan unit sensor.
+                Pelaksanaan teknis dikoordinasikan langsung bersama Bagian Kemahasiswaan dan Sarana Prasarana (Sapra) untuk perizinan, instalasi daya, dan pengamanan alat.
               </p>
             </Card>
 
@@ -110,10 +110,10 @@ export function ProjectShowcase() {
                 PENERAPAN MITRA
               </Badge>
               <h3 className="font-bold text-base text-foreground">
-                Dukungan untuk Sekolah dan Kampus
+                Dukungan untuk Institusi Pendidikan
               </h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Stasiun AQMS dapat dipasang secara modular pada gedung pendidikan dan ruang pertemuan untuk memantau kelayakan sirkulasi udara harian.
+                Stasiun pemantau dapat dikonfigurasi untuk ruang kelas, lab, atau fasilitas umum untuk mengumpulkan data riwayat kelayakan udara.
               </p>
             </Card>
           </div>
