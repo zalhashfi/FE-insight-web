@@ -19,9 +19,9 @@ export function HeroSection() {
       <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-primary text-xs font-semibold tracking-wide backdrop-blur-sm shadow-sm">
           <img src="/BIRULANGIT LOGOGRAM.svg" alt="Logo Biru Langit" className="w-4 h-4" />
-          <span>Sistem Monitoring IoT Lingkungan</span>
+          <span>INSIGHT Lab</span>
           <span className="w-1 h-1 rounded-full bg-primary/40"></span>
-          <span className="text-muted-foreground font-normal">v1.0</span>
+          <span className="text-muted-foreground font-normal text-[11px]">Innovation & Sustainability for Geo-Environmental Health</span>
         </div>
 
         <div className="space-y-4 max-w-4xl mx-auto">
