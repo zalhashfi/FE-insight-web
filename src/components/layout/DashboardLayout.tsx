@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
+import { ThemeToggle } from '../ui/ThemeToggle';
 
 export function DashboardLayout() {
   const { user, logout } = useAuth();
@@ -35,16 +36,19 @@ export function DashboardLayout() {
   const NavContent = () => (
     <div className="flex flex-col h-full bg-[var(--sidebar)] text-[var(--sidebar-foreground)] border-r border-border">
       {/* Brand Header */}
-      <div className="h-16 flex items-center px-4 border-b border-border">
+      <div className="h-16 flex items-center justify-between px-4 border-b border-border">
         {!isCollapsed && <span className="text-lg font-bold tracking-tight text-primary">Insight</span>}
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="ml-auto hidden md:flex" 
-          onClick={() => setIsCollapsed(!isCollapsed)}
-        >
-          {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-        </Button>
+        <div className="flex items-center gap-1">
+          <ThemeToggle />
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="hidden md:flex" 
+            onClick={() => setIsCollapsed(!isCollapsed)}
+          >
+            {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+          </Button>
+        </div>
       </div>
 
       {/* Navigation Links */}
@@ -122,11 +126,14 @@ export function DashboardLayout() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         {/* Mobile Header */}
-        <header className="h-16 flex items-center px-4 border-b border-border md:hidden shrink-0">
-          <Button variant="ghost" size="icon" onClick={() => setIsMobileOpen(true)} className="mr-2">
-            <Menu size={20} />
-          </Button>
-          <span className="text-lg font-bold text-primary tracking-tight">Insight</span>
+        <header className="h-16 flex items-center justify-between px-4 border-b border-border md:hidden shrink-0">
+          <div className="flex items-center">
+            <Button variant="ghost" size="icon" onClick={() => setIsMobileOpen(true)} className="mr-2">
+              <Menu size={20} />
+            </Button>
+            <span className="text-lg font-bold text-primary tracking-tight">Insight</span>
+          </div>
+          <ThemeToggle />
         </header>
 
         {/* Page Content */}

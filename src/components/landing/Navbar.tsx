@@ -1,5 +1,6 @@
 import { Link } from 'react-router';
 import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 export function Navbar() {
   const scrollTo = (id: string) => (e: React.MouseEvent) => {
@@ -49,6 +50,8 @@ export function Navbar() {
             </span>
             <span>Jaringan Aktif</span>
           </div>
+
+          <ThemeToggle />
 
           <Link to="/login">
             <Button size="sm" className="font-semibold shadow-sm cursor-pointer">
