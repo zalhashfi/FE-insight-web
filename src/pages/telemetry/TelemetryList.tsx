@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent, type ChartConfig } from '@/components/ui/chart';
 import { Line, LineChart, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { apiFetch } from '@/lib/api';
 
 type Station = {
   id: string;
@@ -21,17 +22,21 @@ type Station = {
 };
 
 async function fetchStations(): Promise<Station[]> {
-  const res = await fetch('/api/stations', { credentials: 'include' });
+  const res = await apiFetch('/api/devices');
   if (!res.ok) throw new Error('Failed to fetch stations');
   const json = await res.json();
-  return json.stations || [];
+  return json.devices || json.stations || [];
 }
 
-async function fetchTelemetry(stationUuid: string) {
-  if (!stationUuid) return { type: '', data: [] };
-  const res = await fetch(`/api/data/${stationUuid}/history?limit=100`, { credentials: 'include' });
+async function fetchTelemetry(stationUuid: string, sensorType: string = 'aqms') {
+  if (!stationUuid) return { type: sensorType, data: [] };
+  const res = await apiFetch(`/api/data/devices/${stationUuid}/data/${sensorType}?limit=100`);
   if (!res.ok) throw new Error('Failed to fetch telemetry');
-  return res.json();
+  const json = await res.json();
+  return {
+    type: json.sensor_type || sensorType,
+    data: json.data || [],
+  };
 }
 
 export function TelemetryList() {
@@ -42,31 +47,37 @@ export function TelemetryList() {
     queryFn: fetchStations,
   });
 
+  const selectedStation = stations?.find(s => s.uuid === selectedStationUuid);
+  const stationType = (selectedStation?.type || 'aqms') as 'aqms' | 'soc';
+
   const { data: telemetryResult, isLoading: isLoadingTelemetry, isError } = useQuery({
-    queryKey: ['telemetry', selectedStationUuid],
-    queryFn: () => fetchTelemetry(selectedStationUuid),
+    queryKey: ['telemetry', selectedStationUuid, stationType],
+    queryFn: () => fetchTelemetry(selectedStationUuid, stationType),
     enabled: !!selectedStationUuid,
   });
 
-  const selectedStation = stations?.find(s => s.uuid === selectedStationUuid);
-  const type = telemetryResult?.type;
   const telemetries = telemetryResult?.data || [];
+  const type = telemetryResult?.type || stationType;
 
   const chartConfig: ChartConfig = type === 'aqms' ? {
     pm25: { label: 'PM 2.5', color: 'hsl(var(--chart-1))' },
     temperature: { label: 'Suhu', color: 'hsl(var(--chart-2))' },
     humidity: { label: 'Kelembapan', color: 'hsl(var(--chart-3))' },
   } : {
-    moisture: { label: 'Moisture', color: 'hsl(var(--chart-1))' },
+    soil_moisture: { label: 'Moisture', color: 'hsl(var(--chart-1))' },
     temperature: { label: 'Suhu', color: 'hsl(var(--chart-2))' },
     ph: { label: 'pH', color: 'hsl(var(--chart-3))' },
   };
 
   // reverse telemetries for chart so oldest is first (usually history API returns descending)
-  const chartData = [...telemetries].reverse().map(item => ({
-    ...item,
-    time: new Date(item.measuredAt || item.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-  }));
+  const chartData = [...telemetries].reverse().map(item => {
+    const rawTime = item.measured_at || item.measuredAt || item.timestamp;
+    return {
+      ...item,
+      soil_moisture: item.soil_moisture ?? item.soilMoisture ?? item.moisture,
+      time: rawTime ? new Date(rawTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-',
+    };
+  });
 
   return (
     <div className="space-y-6">
@@ -146,10 +157,11 @@ export function TelemetryList() {
                             <TableHead>PM2.5 (µg/m³)</TableHead>
                             <TableHead>Suhu (°C)</TableHead>
                             <TableHead>Kelembapan (%)</TableHead>
+                            <TableHead>CO (ppm)</TableHead>
                           </>
                         ) : (
                           <>
-                            <TableHead>Moisture</TableHead>
+                            <TableHead>Moisture (%)</TableHead>
                             <TableHead>Suhu (°C)</TableHead>
                             <TableHead>pH</TableHead>
                           </>
@@ -157,24 +169,28 @@ export function TelemetryList() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {telemetries.map((data: any) => (
-                        <TableRow key={data.id}>
-                          <TableCell>{new Date(data.measuredAt || data.timestamp).toLocaleString('id-ID')}</TableCell>
-                          {type === 'aqms' ? (
-                            <>
-                              <TableCell>{data.pm25}</TableCell>
-                              <TableCell>{data.temperature}</TableCell>
-                              <TableCell>{data.humidity}</TableCell>
-                            </>
-                          ) : (
-                            <>
-                              <TableCell>{data.moisture}</TableCell>
-                              <TableCell>{data.temperature}</TableCell>
-                              <TableCell>{data.ph}</TableCell>
-                            </>
-                          )}
-                        </TableRow>
-                      ))}
+                      {telemetries.map((data: any, idx: number) => {
+                        const rawTime = data.measured_at || data.measuredAt || data.timestamp;
+                        return (
+                          <TableRow key={data.id || data.uuid || idx}>
+                            <TableCell>{rawTime ? new Date(rawTime).toLocaleString('id-ID') : '-'}</TableCell>
+                            {type === 'aqms' ? (
+                              <>
+                                <TableCell>{data.pm25 ?? '-'}</TableCell>
+                                <TableCell>{data.temperature ?? '-'}</TableCell>
+                                <TableCell>{data.humidity ?? '-'}</TableCell>
+                                <TableCell>{data.co ?? '-'}</TableCell>
+                              </>
+                            ) : (
+                              <>
+                                <TableCell>{data.soil_moisture ?? data.soilMoisture ?? data.moisture ?? '-'}</TableCell>
+                                <TableCell>{data.temperature ?? '-'}</TableCell>
+                                <TableCell>{data.ph ?? '-'}</TableCell>
+                              </>
+                            )}
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </CardContent>

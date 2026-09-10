@@ -27,11 +27,15 @@ async function fetchUnregistered() {
   return json.data || [];
 }
 
-async function fetchTelemetry(stationUuid: string) {
-  if (!stationUuid) return { type: '', data: [] };
-  const res = await fetch(`/api/data/${stationUuid}/history?limit=100`, { credentials: 'include' });
+async function fetchTelemetry(stationUuid: string, sensorType: string = 'aqms') {
+  if (!stationUuid) return { type: sensorType, data: [] };
+  const res = await apiFetch(`/api/data/devices/${stationUuid}/data/${sensorType}?limit=100`);
   if (!res.ok) throw new Error('Failed to fetch telemetry');
-  return res.json();
+  const json = await res.json();
+  return {
+    type: json.sensor_type || sensorType,
+    data: json.data || [],
+  };
 }
 
 export function DashboardHome() {
@@ -50,16 +54,18 @@ export function DashboardHome() {
     enabled: canSeeUnregistered,
   });
 
-  const firstStationUuid = stations?.[0]?.uuid || '';
+  const firstStation = stations?.[0];
+  const firstStationUuid = firstStation?.uuid || '';
+  const firstStationType = (firstStation?.type || 'aqms') as 'aqms' | 'soc';
   
   const { data: telemetryResult, isLoading: isLoadingTelemetry } = useQuery({
-    queryKey: ['telemetry', firstStationUuid],
-    queryFn: () => fetchTelemetry(firstStationUuid),
+    queryKey: ['telemetry', firstStationUuid, firstStationType],
+    queryFn: () => fetchTelemetry(firstStationUuid, firstStationType),
     enabled: !!firstStationUuid,
   });
 
   const telemetries = telemetryResult?.data || [];
-  const type = telemetryResult?.type;
+  const type = telemetryResult?.type || firstStationType;
   const lastData = telemetries[0];
 
   const chartConfig: ChartConfig = type === 'aqms' ? {
@@ -67,15 +73,21 @@ export function DashboardHome() {
     temperature: { label: 'Suhu', color: 'hsl(var(--chart-2))' },
     humidity: { label: 'Kelembapan', color: 'hsl(var(--chart-3))' },
   } : {
-    moisture: { label: 'Moisture', color: 'hsl(var(--chart-1))' },
+    soil_moisture: { label: 'Moisture', color: 'hsl(var(--chart-1))' },
     temperature: { label: 'Suhu', color: 'hsl(var(--chart-2))' },
     ph: { label: 'pH', color: 'hsl(var(--chart-3))' },
   };
 
-  const chartData = [...telemetries].reverse().map((item: any) => ({
-    ...item,
-    time: new Date(item.measuredAt || item.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-  }));
+  const chartData = [...telemetries].reverse().map((item: any) => {
+    const rawTime = item.measured_at || item.measuredAt || item.timestamp;
+    return {
+      ...item,
+      soil_moisture: item.soil_moisture ?? item.soilMoisture ?? item.moisture,
+      time: rawTime ? new Date(rawTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-',
+    };
+  });
+
+  const lastDataTime = lastData ? (lastData.measured_at || lastData.measuredAt || lastData.timestamp) : null;
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -120,10 +132,10 @@ export function DashboardHome() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {lastData ? new Date(lastData.measuredAt || lastData.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-'}
+              {lastDataTime ? new Date(lastDataTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-'}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {lastData ? new Date(lastData.measuredAt || lastData.timestamp).toLocaleDateString('id-ID') : 'Belum ada data'}
+              {lastDataTime ? new Date(lastDataTime).toLocaleDateString('id-ID') : 'Belum ada data'}
             </p>
           </CardContent>
         </Card>
