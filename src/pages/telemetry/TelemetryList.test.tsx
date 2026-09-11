@@ -28,16 +28,16 @@ describe('TelemetryList Page', () => {
   });
 
   it('should render a prompt to select a station initially', async () => {
-    vi.mocked(global.fetch)
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 404,
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ stations: [] }),
-      } as Response);
-
+    vi.mocked(global.fetch).mockImplementation(async (input) => {
+      const url = String(input);
+      if (url.includes('/api/telkom/all')) {
+        return { ok: false, status: 404 } as Response;
+      }
+      if (url.includes('/api/devices')) {
+        return { ok: true, json: async () => ({ stations: [] }) } as Response;
+      }
+      return { ok: true, json: async () => [] } as Response;
+    });
     render(
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
@@ -57,19 +57,20 @@ describe('TelemetryList Page', () => {
       { id: '1', stationId: 's1', stationName: 'Stasiun Alpha', pm25: 15.5, temperature: 28.5, humidity: 65, timestamp: '2026-07-25T10:00:00Z' },
     ];
 
-    vi.mocked(global.fetch)
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 404,
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ stations: mockStations }),
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ type: 'aqms', data: mockTelemetry }),
-      } as Response);
+    vi.mocked(global.fetch).mockImplementation(async (input) => {
+      const url = String(input);
+      if (url.includes('/api/telkom/all')) {
+        return { ok: false, status: 404 } as Response;
+      }
+      if (url.includes('/api/devices')) {
+        return { ok: true, json: async () => ({ stations: mockStations }) } as Response;
+      }
+      if (url.includes('/api/data/devices')) {
+        return { ok: true, json: async () => ({ type: 'aqms', data: mockTelemetry }) } as Response;
+      }
+      return { ok: true, json: async () => [] } as Response;
+    });
+
     render(
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>

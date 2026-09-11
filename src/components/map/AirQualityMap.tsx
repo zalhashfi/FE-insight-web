@@ -32,23 +32,36 @@ interface AirQualityMapProps {
 // Fallback coordinates (Telkom University / SMP Telkom Bandung area)
 const DEFAULT_COORDS: [number, number] = [-6.974, 107.63];
 
+export interface IspuQuality {
+  bg: string;
+  border: string;
+  label: string;
+  textClass: string;
+}
+
+export function getIspuQuality(pm25: number | null | undefined): IspuQuality {
+  if (pm25 == null) {
+    return { bg: '#64748b', border: '#475569', label: 'N/A', textClass: 'text-muted-foreground' };
+  }
+  if (pm25 <= 50) {
+    return { bg: '#10b981', border: '#059669', label: 'Baik', textClass: 'text-emerald-600 dark:text-emerald-400' };
+  }
+  if (pm25 <= 100) {
+    return { bg: '#f59e0b', border: '#d97706', label: 'Sedang', textClass: 'text-amber-500 dark:text-amber-400' };
+  }
+  return { bg: '#ef4444', border: '#dc2626', label: 'Tidak Sehat', textClass: 'text-red-600 dark:text-red-400' };
+}
+
 function getMarkerColor(station: MapStation): { bg: string; border: string; label: string } {
   if (station.status === 'offline') {
     return { bg: '#64748b', border: '#475569', label: 'Offline' };
   }
   if (station.pm25 != null) {
-    if (station.pm25 <= 50) {
-      return { bg: '#10b981', border: '#059669', label: 'Baik' };
-    }
-    if (station.pm25 <= 100) {
-      return { bg: '#f59e0b', border: '#d97706', label: 'Sedang' };
-    }
-    return { bg: '#ef4444', border: '#dc2626', label: 'Tidak Sehat' };
+    return getIspuQuality(station.pm25);
   }
   // Default active brand color
   return { bg: '#0079FE', border: '#005fcc', label: 'Aktif' };
 }
-
 function createCustomIcon(station: MapStation, isSelected: boolean): L.DivIcon {
   const { bg, border: _border } = getMarkerColor(station);
   const size = isSelected ? 34 : 26;

@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
 import { getTelkomStationsOverview } from '@/services/telkomApi';
-import { AirQualityMap, type MapStation } from '@/components/map/AirQualityMap';
+import { AirQualityMap, getIspuQuality, type MapStation } from '@/components/map/AirQualityMap';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -267,7 +267,7 @@ export function MapPage() {
                       </p>
                       <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/40 text-[11px]">
                         <span className="text-muted-foreground">PM2.5:</span>
-                        <span className="font-bold text-foreground">
+                        <span className={`font-bold ${getIspuQuality(station.pm25).textClass}`}>
                           {station.pm25 != null ? `${station.pm25} µg/m³` : 'N/A'}
                         </span>
                       </div>

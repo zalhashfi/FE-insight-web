@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getTelkomStationsOverview } from '@/services/telkomApi';
-import { AirQualityMap, type MapStation } from '@/components/map/AirQualityMap';
+import { AirQualityMap, getIspuQuality, type MapStation } from '@/components/map/AirQualityMap';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -121,8 +121,8 @@ export function MapPreviewSection() {
                     <div className="grid grid-cols-3 gap-2 text-center bg-background/80 rounded-lg p-2 border border-border/40 text-xs">
                       <div>
                         <div className="text-[10px] text-muted-foreground">PM2.5</div>
-                        <div className="font-bold text-emerald-600 dark:text-emerald-400">
-                          {station.pm25} µg/m³
+                        <div className={`font-bold ${getIspuQuality(station.pm25).textClass}`}>
+                          {station.pm25 != null ? `${station.pm25} µg/m³` : 'N/A'}
                         </div>
                       </div>
                       <div>
