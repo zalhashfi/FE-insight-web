@@ -6,6 +6,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } f
 import { Line, LineChart, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { apiFetch } from '@/lib/api';
 import { getTelkomStationsOverview, getTelkomStationHistory } from '@/services/telkomApi';
+import { MultiStationComparisonChart } from '@/components/charts/MultiStationComparisonChart';
 
 type Station = {
   id: string;
@@ -168,6 +169,9 @@ export function DashboardHome() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Multi-Station PM2.5 12h Comparison Chart */}
+      <MultiStationComparisonChart timeRangeHours={12} />
 
       {stations && stations.length > 0 && (
         <Card className="col-span-4">

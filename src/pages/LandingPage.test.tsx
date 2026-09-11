@@ -65,9 +65,8 @@ describe('LandingPage', () => {
     expect(screen.getByText(/Titik Outdoor & EWS/i)).toBeInTheDocument();
 
     // 4. Live Telemetry
-    expect(screen.getByText(/Grafik Telemetri Lapangan/i)).toBeInTheDocument();
-    expect(screen.getByText(/PM 2.5 Terakhir/i)).toBeInTheDocument();
-    // 5. Map Preview Section (GIS)
+    expect(screen.getByText(/Komparasi PM2.5 Antar Stasiun/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/TULT/i).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText(/Pemetaan Kualitas Udara Real-Time/i)).toBeInTheDocument();
     expect(screen.getAllByText(/Peta Spasial/i).length).toBeGreaterThanOrEqual(1);
 
