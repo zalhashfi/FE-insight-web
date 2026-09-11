@@ -1,6 +1,6 @@
 # AGENTS.md — zalhashfi/FE-insight-web
 
-Frontend client web dashboard untuk IoT insight (AQMS & SOC) berbasis React 19, Vite, Tailwind CSS, TanStack Query, dan Vitest.
+Frontend client web dashboard untuk IoT insight (AQMS) berbasis React 19, Vite, Tailwind CSS, TanStack Query, dan Vitest.
 
 ## Workflow & Development Guidelines
 

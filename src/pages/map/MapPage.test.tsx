@@ -61,9 +61,9 @@ describe('MapPage', () => {
       },
       {
         uuid: 'station-2',
-        name: 'Stasiun SOC 1',
+        name: 'Stasiun Lab 2',
         projectName: 'Proyek INSIGHT',
-        type: 'soc',
+        type: 'aqms',
         latitude: -6.975,
         longitude: 107.631,
         pm25: 75,
@@ -91,7 +91,7 @@ describe('MapPage', () => {
     // Wait for stations to be loaded
     await waitFor(() => {
       expect(screen.getByText('Stasiun Lab 1')).toBeInTheDocument();
-      expect(screen.getByText('Stasiun SOC 1')).toBeInTheDocument();
+      expect(screen.getByText('Stasiun Lab 2')).toBeInTheDocument();
     });
 
     // Verify Summary Cards
@@ -100,10 +100,10 @@ describe('MapPage', () => {
     expect(screen.getByText('Kualitas Sedang')).toBeInTheDocument();
   });
 
-  it('filters stations by type when buttons are clicked', async () => {
+  it('filters stations by air quality category when buttons are clicked', async () => {
     const mockDevices = [
-      { uuid: '1', name: 'Alat AQMS Utama', type: 'aqms', pm25: 25 },
-      { uuid: '2', name: 'Alat SOC Sensor', type: 'soc', pm25: 45 },
+      { uuid: '1', name: 'Alat Kualitas Baik', type: 'aqms', pm25: 25 },
+      { uuid: '2', name: 'Alat Kualitas Sedang', type: 'aqms', pm25: 75 },
     ];
 
     vi.mocked(global.fetch).mockResolvedValueOnce({
@@ -120,17 +120,17 @@ describe('MapPage', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Alat AQMS Utama')).toBeInTheDocument();
-      expect(screen.getByText('Alat SOC Sensor')).toBeInTheDocument();
+      expect(screen.getByText('Alat Kualitas Baik')).toBeInTheDocument();
+      expect(screen.getByText('Alat Kualitas Sedang')).toBeInTheDocument();
     });
 
-    // Click AQMS filter
-    const aqmsBtn = screen.getByRole('button', { name: /^AQMS$/i });
-    aqmsBtn.click();
+    // Click Baik filter button
+    const baikBtn = screen.getByRole('button', { name: /baik/i });
+    baikBtn.click();
 
     await waitFor(() => {
-      expect(screen.getByText('Alat AQMS Utama')).toBeInTheDocument();
-      expect(screen.queryByText('Alat SOC Sensor')).not.toBeInTheDocument();
+      expect(screen.getByText('Alat Kualitas Baik')).toBeInTheDocument();
+      expect(screen.queryByText('Alat Kualitas Sedang')).not.toBeInTheDocument();
     });
   });
 });
