@@ -41,15 +41,19 @@ cd FE-insight-web
 npm install
 ```
 
-### 3. Environment Setup
+### 3. Environment Setup (Optional)
 
-Copy example file or create a `.env.local` to define environment-specific variables like backend API endpoints:
+Salin file `.env.example` menjadi `.env.local` jika ingin menyesuaikan target proxy backend saat development (default mengarah ke `http://localhost:3000`):
 
 ```bash
-# Optional API override (default proxy routes to http://localhost:3000)
-VITE_API_URL=http://localhost:3000
+cp .env.example .env.local
 ```
 
+Variabel yang tersedia di `.env.local`:
+```bash
+# Target proxy backend API saat development
+VITE_API_URL=http://localhost:3000
+```
 ### 4. Start Development Server
 
 #### Standard Mode (Local Node.js)
