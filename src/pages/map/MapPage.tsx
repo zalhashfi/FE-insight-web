@@ -43,7 +43,7 @@ async function fetchStations(): Promise<MapStation[]> {
       uuid: dev.uuid || dev.id || `dev-${index}`,
       name: dev.name || `Stasiun ${index + 1}`,
       projectName: dev.projectName || 'PENGMAS SMP Telkom Bandung',
-      type: dev.type || (index % 2 === 0 ? 'aqms' : 'soc'),
+      type: dev.type || 'aqms',
       macAddress: dev.macAddress || null,
       currentVersion: dev.currentVersion || 'v1.2.0',
       latitude: dev.latitude ?? null,
@@ -58,7 +58,7 @@ async function fetchStations(): Promise<MapStation[]> {
 
 export function MapPage() {
   const navigate = useNavigate();
-  const [filterType, setFilterType] = useState<'all' | 'aqms' | 'soc'>('all');
+  const [filterQuality, setFilterQuality] = useState<'all' | 'good' | 'moderate' | 'unhealthy'>('all');
   const [selectedStationId, setSelectedStationId] = useState<string | null>(null);
 
   const { data: stations = [], isLoading, isError, refetch, isFetching } = useQuery({
@@ -67,9 +67,12 @@ export function MapPage() {
   });
 
   const filteredStations = useMemo(() => {
-    if (filterType === 'all') return stations;
-    return stations.filter((s) => s.type.toLowerCase() === filterType);
-  }, [stations, filterType]);
+    if (filterQuality === 'all') return stations;
+    if (filterQuality === 'good') return stations.filter((s) => s.pm25 != null && s.pm25 <= 50);
+    if (filterQuality === 'moderate') return stations.filter((s) => s.pm25 != null && s.pm25 > 50 && s.pm25 <= 100);
+    if (filterQuality === 'unhealthy') return stations.filter((s) => s.pm25 != null && s.pm25 > 100);
+    return stations;
+  }, [stations, filterQuality]);
 
   const stats = useMemo(() => {
     const total = stations.length;
@@ -93,7 +96,7 @@ export function MapPage() {
             Peta Spasial Kualitas Udara
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Visualisasi pemantauan geografis sebaran stasiun AQMS &amp; SOC berbasis Leaflet GIS.
+            Visualisasi pemantauan geografis sebaran stasiun AQMS berbasis Leaflet GIS.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -182,28 +185,36 @@ export function MapPage() {
           <div className="flex items-center gap-1.5 self-start sm:self-auto">
             <Filter className="h-4 w-4 text-muted-foreground mr-1" />
             <Button
-              variant={filterType === 'all' ? 'default' : 'outline'}
+              variant={filterQuality === 'all' ? 'default' : 'outline'}
               size="sm"
               className="h-8 text-xs px-3"
-              onClick={() => setFilterType('all')}
+              onClick={() => setFilterQuality('all')}
             >
               Semua ({stations.length})
             </Button>
             <Button
-              variant={filterType === 'aqms' ? 'default' : 'outline'}
+              variant={filterQuality === 'good' ? 'default' : 'outline'}
               size="sm"
               className="h-8 text-xs px-3"
-              onClick={() => setFilterType('aqms')}
+              onClick={() => setFilterQuality('good')}
             >
-              AQMS
+              Baik ({stats.good})
             </Button>
             <Button
-              variant={filterType === 'soc' ? 'default' : 'outline'}
+              variant={filterQuality === 'moderate' ? 'default' : 'outline'}
               size="sm"
               className="h-8 text-xs px-3"
-              onClick={() => setFilterType('soc')}
+              onClick={() => setFilterQuality('moderate')}
             >
-              SOC
+              Sedang ({stats.moderate})
+            </Button>
+            <Button
+              variant={filterQuality === 'unhealthy' ? 'default' : 'outline'}
+              size="sm"
+              className="h-8 text-xs px-3"
+              onClick={() => setFilterQuality('unhealthy')}
+            >
+              Siaga ({stats.unhealthy})
             </Button>
           </div>
         </CardHeader>

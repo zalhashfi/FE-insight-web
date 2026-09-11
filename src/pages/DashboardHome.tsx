@@ -10,8 +10,17 @@ type Station = {
   id: string;
   uuid: string;
   name: string;
-  type: 'aqms' | 'soc';
+  type: 'aqms';
 };
+interface TelemetryItem {
+  measured_at?: string;
+  measuredAt?: string;
+  timestamp?: string;
+  pm25?: number;
+  temperature?: number;
+  humidity?: number;
+  [key: string]: unknown;
+}
 
 async function fetchStations(): Promise<Station[]> {
   const res = await apiFetch('/api/devices');
@@ -56,8 +65,7 @@ export function DashboardHome() {
 
   const firstStation = stations?.[0];
   const firstStationUuid = firstStation?.uuid || '';
-  const firstStationType = (firstStation?.type || 'aqms') as 'aqms' | 'soc';
-  
+  const firstStationType = (firstStation?.type || 'aqms') as 'aqms';
   const { data: telemetryResult, isLoading: isLoadingTelemetry } = useQuery({
     queryKey: ['telemetry', firstStationUuid, firstStationType],
     queryFn: () => fetchTelemetry(firstStationUuid, firstStationType),
@@ -65,24 +73,20 @@ export function DashboardHome() {
   });
 
   const telemetries = telemetryResult?.data || [];
-  const type = telemetryResult?.type || firstStationType;
   const lastData = telemetries[0];
 
-  const chartConfig: ChartConfig = type === 'aqms' ? {
+  const chartConfig: ChartConfig = {
     pm25: { label: 'PM 2.5', color: 'hsl(var(--chart-1))' },
     temperature: { label: 'Suhu', color: 'hsl(var(--chart-2))' },
     humidity: { label: 'Kelembapan', color: 'hsl(var(--chart-3))' },
-  } : {
-    soil_moisture: { label: 'Moisture', color: 'hsl(var(--chart-1))' },
-    temperature: { label: 'Suhu', color: 'hsl(var(--chart-2))' },
-    ph: { label: 'pH', color: 'hsl(var(--chart-3))' },
   };
 
-  const chartData = [...telemetries].reverse().map((item: any) => {
-    const rawTime = item.measured_at || item.measuredAt || item.timestamp;
+  const chartData = [...telemetries].reverse().map((item: TelemetryItem) => {
+    const rawTime = (typeof item.measured_at === 'string' && item.measured_at)
+      || (typeof item.measuredAt === 'string' && item.measuredAt)
+      || (typeof item.timestamp === 'string' && item.timestamp);
     return {
       ...item,
-      soil_moisture: item.soil_moisture ?? item.soilMoisture ?? item.moisture,
       time: rawTime ? new Date(rawTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-',
     };
   });

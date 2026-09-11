@@ -18,8 +18,21 @@ type Station = {
   id: string;
   uuid: string;
   name: string;
-  type: 'aqms' | 'soc';
+  type: 'aqms';
 };
+
+interface TelemetryRow {
+  id?: string;
+  uuid?: string;
+  measured_at?: string;
+  measuredAt?: string;
+  timestamp?: string;
+  pm25?: number | null;
+  temperature?: number | null;
+  humidity?: number | null;
+  co?: number | null;
+  [key: string]: unknown;
+}
 
 async function fetchStations(): Promise<Station[]> {
   const res = await apiFetch('/api/devices');
@@ -48,7 +61,7 @@ export function TelemetryList() {
   });
 
   const selectedStation = stations?.find(s => s.uuid === selectedStationUuid);
-  const stationType = (selectedStation?.type || 'aqms') as 'aqms' | 'soc';
+  const stationType = 'aqms';
 
   const { data: telemetryResult, isLoading: isLoadingTelemetry, isError } = useQuery({
     queryKey: ['telemetry', selectedStationUuid, stationType],
@@ -57,24 +70,20 @@ export function TelemetryList() {
   });
 
   const telemetries = telemetryResult?.data || [];
-  const type = telemetryResult?.type || stationType;
 
-  const chartConfig: ChartConfig = type === 'aqms' ? {
+  const chartConfig: ChartConfig = {
     pm25: { label: 'PM 2.5', color: 'hsl(var(--chart-1))' },
     temperature: { label: 'Suhu', color: 'hsl(var(--chart-2))' },
     humidity: { label: 'Kelembapan', color: 'hsl(var(--chart-3))' },
-  } : {
-    soil_moisture: { label: 'Moisture', color: 'hsl(var(--chart-1))' },
-    temperature: { label: 'Suhu', color: 'hsl(var(--chart-2))' },
-    ph: { label: 'pH', color: 'hsl(var(--chart-3))' },
   };
 
   // reverse telemetries for chart so oldest is first (usually history API returns descending)
-  const chartData = [...telemetries].reverse().map(item => {
-    const rawTime = item.measured_at || item.measuredAt || item.timestamp;
+  const chartData = [...telemetries].reverse().map((item: TelemetryRow) => {
+    const rawTime = (typeof item.measured_at === 'string' && item.measured_at)
+      || (typeof item.measuredAt === 'string' && item.measuredAt)
+      || (typeof item.timestamp === 'string' && item.timestamp);
     return {
       ...item,
-      soil_moisture: item.soil_moisture ?? item.soilMoisture ?? item.moisture,
       time: rawTime ? new Date(rawTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-',
     };
   });
@@ -152,42 +161,24 @@ export function TelemetryList() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Waktu</TableHead>
-                        {type === 'aqms' ? (
-                          <>
-                            <TableHead>PM2.5 (µg/m³)</TableHead>
-                            <TableHead>Suhu (°C)</TableHead>
-                            <TableHead>Kelembapan (%)</TableHead>
-                            <TableHead>CO (ppm)</TableHead>
-                          </>
-                        ) : (
-                          <>
-                            <TableHead>Moisture (%)</TableHead>
-                            <TableHead>Suhu (°C)</TableHead>
-                            <TableHead>pH</TableHead>
-                          </>
-                        )}
+                        <TableHead>PM2.5 (µg/m³)</TableHead>
+                        <TableHead>Suhu (°C)</TableHead>
+                        <TableHead>Kelembapan (%)</TableHead>
+                        <TableHead>CO (ppm)</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {telemetries.map((data: any, idx: number) => {
-                        const rawTime = data.measured_at || data.measuredAt || data.timestamp;
+                      {telemetries.map((data: TelemetryRow, idx: number) => {
+                        const rawTime = (typeof data.measured_at === 'string' && data.measured_at)
+                          || (typeof data.measuredAt === 'string' && data.measuredAt)
+                          || (typeof data.timestamp === 'string' && data.timestamp);
                         return (
                           <TableRow key={data.id || data.uuid || idx}>
                             <TableCell>{rawTime ? new Date(rawTime).toLocaleString('id-ID') : '-'}</TableCell>
-                            {type === 'aqms' ? (
-                              <>
-                                <TableCell>{data.pm25 ?? '-'}</TableCell>
-                                <TableCell>{data.temperature ?? '-'}</TableCell>
-                                <TableCell>{data.humidity ?? '-'}</TableCell>
-                                <TableCell>{data.co ?? '-'}</TableCell>
-                              </>
-                            ) : (
-                              <>
-                                <TableCell>{data.soil_moisture ?? data.soilMoisture ?? data.moisture ?? '-'}</TableCell>
-                                <TableCell>{data.temperature ?? '-'}</TableCell>
-                                <TableCell>{data.ph ?? '-'}</TableCell>
-                              </>
-                            )}
+                            <TableCell>{data.pm25 ?? '-'}</TableCell>
+                            <TableCell>{data.temperature ?? '-'}</TableCell>
+                            <TableCell>{data.humidity ?? '-'}</TableCell>
+                            <TableCell>{data.co ?? '-'}</TableCell>
                           </TableRow>
                         );
                       })}

@@ -123,7 +123,6 @@ export function AddStationDialog() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="aqms">AQMS</SelectItem>
-                  <SelectItem value="soc">SOC</SelectItem>
                 </SelectContent>
               </Select>
             </div>

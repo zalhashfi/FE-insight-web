@@ -24,7 +24,7 @@ const SHOWCASE_STATIONS: MapStation[] = [
     uuid: 'showcase-indoor-1',
     name: 'SMP Telkom - Koridor Kelas (Indoor)',
     projectName: 'PENGMAS SMP Telkom Bandung',
-    type: 'soc',
+    type: 'aqms',
     latitude: -6.9742,
     longitude: 107.6298,
     status: 'online',

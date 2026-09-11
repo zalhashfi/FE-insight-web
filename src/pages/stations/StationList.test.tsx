@@ -16,7 +16,7 @@ describe('StationList Page', () => {
   it('should render a list of stations fetched from the API', async () => {
     const mockStations = [
       { uuid: '1', name: 'Stasiun Alpha', projectName: 'Biru Langit', type: 'aqms', macAddress: '00:11:22', currentVersion: '1.0.0', latitude: null, longitude: null },
-      { uuid: '2', name: 'Stasiun Beta', projectName: 'Biru Langit 2', type: 'soc', macAddress: null, currentVersion: '2.0.0', latitude: -7.0, longitude: 110.0 },
+      { uuid: '2', name: 'Stasiun Beta', projectName: 'Biru Langit 2', type: 'aqms', macAddress: null, currentVersion: '2.0.0', latitude: -7.0, longitude: 110.0 },
     ];
 
     (global.fetch as any).mockResolvedValueOnce({
