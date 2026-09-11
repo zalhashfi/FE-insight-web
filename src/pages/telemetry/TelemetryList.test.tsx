@@ -28,10 +28,15 @@ describe('TelemetryList Page', () => {
   });
 
   it('should render a prompt to select a station initially', async () => {
-    (global.fetch as any).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ stations: [] }),
-    });
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ stations: [] }),
+      } as Response);
 
     render(
       <QueryClientProvider client={queryClient}>
@@ -52,16 +57,19 @@ describe('TelemetryList Page', () => {
       { id: '1', stationId: 's1', stationName: 'Stasiun Alpha', pm25: 15.5, temperature: 28.5, humidity: 65, timestamp: '2026-07-25T10:00:00Z' },
     ];
 
-    (global.fetch as any)
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+      } as Response)
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({ stations: mockStations }),
-      })
+      } as Response)
       .mockResolvedValueOnce({
         ok: true,
         json: async () => ({ type: 'aqms', data: mockTelemetry }),
-      });
-
+      } as Response);
     render(
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>

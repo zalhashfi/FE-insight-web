@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { MemoryRouter } from 'react-router';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import LandingPage from './LandingPage';
-
 beforeAll(() => {
   Object.defineProperty(window, 'matchMedia', {
     writable: true,
@@ -36,14 +36,19 @@ vi.mock('recharts', async () => {
 
 describe('LandingPage', () => {
   it('renders all key sections correctly', () => {
-    render(
-      <MemoryRouter>
-        <ThemeProvider>
-          <LandingPage />
-        </ThemeProvider>
-      </MemoryRouter>
-    );
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
 
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <ThemeProvider>
+            <LandingPage />
+          </ThemeProvider>
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
     // 1. Header & Hero
     expect(screen.getAllByText(/INSIGHT Lab/i).length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText(/Pemantauan Kualitas/i).length).toBeGreaterThanOrEqual(1);

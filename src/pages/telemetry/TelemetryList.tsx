@@ -13,45 +13,69 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent, type ChartConfig } from '@/components/ui/chart';
 import { Line, LineChart, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { apiFetch } from '@/lib/api';
+import { getTelkomStationsOverview, getTelkomStationHistory } from '@/services/telkomApi';
 
 type Station = {
   id: string;
   uuid: string;
   name: string;
   type: 'aqms';
+  locationKey?: string;
 };
 
 interface TelemetryRow {
-  id?: string;
+  id?: string | number;
   uuid?: string;
   measured_at?: string;
   measuredAt?: string;
   timestamp?: string;
+  created_at?: string;
   pm25?: number | null;
   temperature?: number | null;
   humidity?: number | null;
-  co?: number | null;
+  co2?: number | null;
+  windSpeed?: number | null;
   [key: string]: unknown;
 }
 
 async function fetchStations(): Promise<Station[]> {
+  try {
+    const telkomStations = await getTelkomStationsOverview();
+    if (telkomStations && telkomStations.length > 0) {
+      return telkomStations.map((s) => ({
+        id: s.uuid,
+        uuid: s.uuid,
+        name: s.name,
+        type: 'aqms',
+        locationKey: s.locationKey,
+      }));
+    }
+  } catch {
+    // fallback to internal /api/devices
+  }
+
   const res = await apiFetch('/api/devices');
   if (!res.ok) throw new Error('Failed to fetch stations');
   const json = await res.json();
   return json.devices || json.stations || [];
 }
 
-async function fetchTelemetry(stationUuid: string, sensorType: string = 'aqms') {
-  if (!stationUuid) return { type: sensorType, data: [] };
-  const res = await apiFetch(`/api/data/devices/${stationUuid}/data/${sensorType}?limit=100`);
+async function fetchTelemetry(station: Station | undefined) {
+  if (!station) return { type: 'aqms', data: [] };
+
+  if (station.locationKey) {
+    const data = await getTelkomStationHistory({ location: station.locationKey });
+    return { type: 'aqms', data };
+  }
+
+  const res = await apiFetch(`/api/data/devices/${station.uuid}/data/aqms?limit=100`);
   if (!res.ok) throw new Error('Failed to fetch telemetry');
   const json = await res.json();
   return {
-    type: json.sensor_type || sensorType,
+    type: json.sensor_type || 'aqms',
     data: json.data || [],
   };
 }
-
 export function TelemetryList() {
   const [selectedStationUuid, setSelectedStationUuid] = useState<string>('');
 
@@ -60,15 +84,15 @@ export function TelemetryList() {
     queryFn: fetchStations,
   });
 
-  const selectedStation = stations?.find(s => s.uuid === selectedStationUuid);
-  const stationType = 'aqms';
+  // Set default selection to first station if not yet set
+  const activeStationUuid = selectedStationUuid || stations?.[0]?.uuid || '';
+  const selectedStation = stations?.find((s) => s.uuid === activeStationUuid);
 
   const { data: telemetryResult, isLoading: isLoadingTelemetry, isError } = useQuery({
-    queryKey: ['telemetry', selectedStationUuid, stationType],
-    queryFn: () => fetchTelemetry(selectedStationUuid, stationType),
-    enabled: !!selectedStationUuid,
+    queryKey: ['telemetry', activeStationUuid],
+    queryFn: () => fetchTelemetry(selectedStation),
+    enabled: !!activeStationUuid,
   });
-
   const telemetries = telemetryResult?.data || [];
 
   const chartConfig: ChartConfig = {
@@ -99,7 +123,7 @@ export function TelemetryList() {
           {isLoadingStations ? (
             <p>Loading stations...</p>
           ) : (
-            <Select onValueChange={(v) => setSelectedStationUuid(v || '')} value={selectedStationUuid}>
+            <Select onValueChange={(v) => setSelectedStationUuid(v || '')} value={activeStationUuid}>
               <SelectTrigger className="w-full sm:w-[300px]">
                 <SelectValue placeholder="Pilih Stasiun" />
               </SelectTrigger>
@@ -115,7 +139,7 @@ export function TelemetryList() {
         </CardContent>
       </Card>
 
-      {selectedStationUuid && (
+      {activeStationUuid && (
         <>
           {isLoadingTelemetry && <div className="p-4">Loading data...</div>}
           {isError && <div className="p-4 text-destructive">Error loading data.</div>}
@@ -173,12 +197,12 @@ export function TelemetryList() {
                           || (typeof data.measuredAt === 'string' && data.measuredAt)
                           || (typeof data.timestamp === 'string' && data.timestamp);
                         return (
-                          <TableRow key={data.id || data.uuid || idx}>
+                          <TableRow key={String(data.id ?? data.uuid ?? idx)}>
                             <TableCell>{rawTime ? new Date(rawTime).toLocaleString('id-ID') : '-'}</TableCell>
-                            <TableCell>{data.pm25 ?? '-'}</TableCell>
-                            <TableCell>{data.temperature ?? '-'}</TableCell>
-                            <TableCell>{data.humidity ?? '-'}</TableCell>
-                            <TableCell>{data.co ?? '-'}</TableCell>
+                            <TableCell>{data.pm25 != null ? String(data.pm25) : '-'}</TableCell>
+                            <TableCell>{data.temperature != null ? String(data.temperature) : '-'}</TableCell>
+                            <TableCell>{data.humidity != null ? String(data.humidity) : '-'}</TableCell>
+                            <TableCell>{data.co != null ? String(data.co) : '-'}</TableCell>
                           </TableRow>
                         );
                       })}

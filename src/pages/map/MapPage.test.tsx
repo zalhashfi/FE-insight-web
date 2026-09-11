@@ -72,10 +72,15 @@ describe('MapPage', () => {
       },
     ];
 
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ devices: mockDevices }),
-    } as Response);
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ devices: mockDevices }),
+      } as Response);
 
     render(
       <QueryClientProvider client={queryClient}>
@@ -105,12 +110,15 @@ describe('MapPage', () => {
       { uuid: '1', name: 'Alat Kualitas Baik', type: 'aqms', pm25: 25 },
       { uuid: '2', name: 'Alat Kualitas Sedang', type: 'aqms', pm25: 75 },
     ];
-
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ devices: mockDevices }),
-    } as Response);
-
+    vi.mocked(global.fetch)
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ devices: mockDevices }),
+      } as Response);
     render(
       <QueryClientProvider client={queryClient}>
         <MemoryRouter>

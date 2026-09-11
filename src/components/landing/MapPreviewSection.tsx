@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { getTelkomStationsOverview } from '@/services/telkomApi';
 import { AirQualityMap, type MapStation } from '@/components/map/AirQualityMap';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -6,49 +8,62 @@ import { Card, CardContent } from '@/components/ui/card';
 import { MapPin, ArrowRight, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router';
 
-// Realistic representative stations for landing page GIS demonstration
+// Realistic representative fallback stations for landing page GIS demonstration
 const SHOWCASE_STATIONS: MapStation[] = [
   {
-    uuid: 'showcase-outdoor-1',
-    name: 'SMP Telkom - Atap Gedung (Outdoor)',
-    projectName: 'PENGMAS SMP Telkom Bandung',
+    uuid: 'telkom-tult',
+    name: 'Gedung TULT (Telkom University)',
+    projectName: 'Telkom University AQMS',
     type: 'aqms',
-    latitude: -6.9735,
-    longitude: 107.6305,
+    latitude: -6.969854,
+    longitude: 107.628283,
     status: 'online',
-    pm25: 38,
-    temperature: 27.4,
-    humidity: 65,
-  },
-  {
-    uuid: 'showcase-indoor-1',
-    name: 'SMP Telkom - Koridor Kelas (Indoor)',
-    projectName: 'PENGMAS SMP Telkom Bandung',
-    type: 'aqms',
-    latitude: -6.9742,
-    longitude: 107.6298,
-    status: 'online',
-    pm25: 22,
-    temperature: 25.1,
-    humidity: 58,
-  },
-  {
-    uuid: 'showcase-lab-1',
-    name: 'Telkom University - INSIGHT Center',
-    projectName: 'Research & Co-location Hub',
-    type: 'aqms',
-    latitude: -6.975,
-    longitude: 107.6315,
-    status: 'online',
-    pm25: 44,
-    temperature: 26.8,
+    pm25: 58,
+    temperature: 28.5,
     humidity: 62,
+  },
+  {
+    uuid: 'telkom-gku',
+    name: 'Gedung Kuliah Umum (GKU)',
+    projectName: 'Telkom University AQMS',
+    type: 'aqms',
+    latitude: -6.972382,
+    longitude: 107.631526,
+    status: 'online',
+    pm25: 76,
+    temperature: 32.2,
+    humidity: 54,
+  },
+  {
+    uuid: 'telkom-deli',
+    name: 'Gedung Deli (FIK)',
+    projectName: 'Telkom University AQMS',
+    type: 'aqms',
+    latitude: -6.975412,
+    longitude: 107.629815,
+    status: 'online',
+    pm25: 99,
+    temperature: 25.1,
+    humidity: 80,
   },
 ];
 
 export function MapPreviewSection() {
-  const [selectedStation, setSelectedStation] = useState<MapStation>(SHOWCASE_STATIONS[0]);
+  const { data: stations = SHOWCASE_STATIONS } = useQuery({
+    queryKey: ['landing-telkom-stations'],
+    queryFn: async () => {
+      try {
+        const res = await getTelkomStationsOverview();
+        return res && res.length > 0 ? res : SHOWCASE_STATIONS;
+      } catch {
+        return SHOWCASE_STATIONS;
+      }
+    },
+    staleTime: 1000 * 60 * 2, // 2 minutes
+  });
 
+  const [selectedStationId, setSelectedStationId] = useState<string | null>(null);
+  const selectedStation = stations.find((s) => s.uuid === selectedStationId) || stations[0];
   return (
     <section id="map-preview" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
       {/* Header */}
@@ -83,12 +98,12 @@ export function MapPreviewSection() {
             <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               Titik Pemantauan Aktif
             </h3>
-            {SHOWCASE_STATIONS.map((station) => {
+            {stations.map((station) => {
               const isSelected = selectedStation.uuid === station.uuid;
               return (
                 <Card
                   key={station.uuid}
-                  onClick={() => setSelectedStation(station)}
+                  onClick={() => setSelectedStationId(station.uuid)}
                   className={`cursor-pointer transition-all border ${
                     isSelected
                       ? 'border-primary bg-primary/5 shadow-sm'
@@ -139,9 +154,9 @@ export function MapPreviewSection() {
         {/* Right Leaflet Map */}
         <div className="lg:col-span-2 min-h-[460px] h-full flex flex-col">
           <AirQualityMap
-            stations={SHOWCASE_STATIONS}
+            stations={stations}
             selectedStationId={selectedStation.uuid}
-            onSelectStation={(s) => setSelectedStation(s)}
+            onSelectStation={(s) => setSelectedStationId(s.uuid)}
             height="100%"
             className="flex-1 min-h-[460px] border-border/70"
           />
