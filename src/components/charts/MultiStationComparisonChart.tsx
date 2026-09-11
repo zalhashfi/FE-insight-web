@@ -11,81 +11,132 @@ interface MultiStationComparisonChartProps {
 }
 
 export const comparisonChartConfig: ChartConfig = {
-  tult: { label: 'TULT (Gedung TULT)', color: '#0079FE' },
-  gku: { label: 'GKU (Gedung Kuliah Umum)', color: '#10b981' },
+  tult: { label: 'TULT', color: '#0079FE' },
+  gku: { label: 'GKU', color: '#10b981' },
   deli: { label: 'Gedung Deli', color: '#f59e0b' },
 };
 
 export interface MultiStationPoint {
   time: string;
+  date: string;
+  fullTime: string;
   timestamp: number;
   tult: number | null;
   gku: number | null;
   deli: number | null;
 }
 
-export function MultiStationComparisonChart({ timeRangeHours = 12 }: MultiStationComparisonChartProps) {
-  const timeLow = useMemo(() => {
-    const d = new Date(Date.now() - timeRangeHours * 60 * 60 * 1000);
-    return d.toISOString().replace('T', ' ').slice(0, 19);
-  }, [timeRangeHours]);
-
+export function MultiStationComparisonChart({ timeRangeHours = 6 }: MultiStationComparisonChartProps) {
   const { data: tultData = [], isLoading: loadingTult } = useQuery({
-    queryKey: ['history-TULT', timeRangeHours],
-    queryFn: () => getTelkomStationHistory({ location: 'TULT', timeLow }),
+    queryKey: ['history-TULT'],
+    queryFn: () => getTelkomStationHistory({ location: 'TULT' }),
     staleTime: 1000 * 60 * 2,
   });
 
   const { data: gkuData = [], isLoading: loadingGku } = useQuery({
-    queryKey: ['history-GKU', timeRangeHours],
-    queryFn: () => getTelkomStationHistory({ location: 'GKU', timeLow }),
+    queryKey: ['history-GKU'],
+    queryFn: () => getTelkomStationHistory({ location: 'GKU' }),
     staleTime: 1000 * 60 * 2,
   });
 
   const { data: deliData = [], isLoading: loadingDeli } = useQuery({
-    queryKey: ['history-Deli', timeRangeHours],
-    queryFn: () => getTelkomStationHistory({ location: 'Deli', timeLow }),
+    queryKey: ['history-Deli'],
+    queryFn: () => getTelkomStationHistory({ location: 'Deli' }),
     staleTime: 1000 * 60 * 2,
   });
+
   const isLoading = loadingTult || loadingGku || loadingDeli;
 
-  const chartData = useMemo<MultiStationPoint[]>(() => {
-    const timeMap = new Map<string, MultiStationPoint>();
+  const { chartData, activeDateRange } = useMemo(() => {
+    // Collect all data points
+    const points: Array<{ station: 'tult' | 'gku' | 'deli'; time: Date; pm25: number | null }> = [];
 
-    let latestTs = 0;
-    for (const item of [...tultData, ...gkuData, ...deliData]) {
-      const ts = new Date(item.created_at).getTime();
-      if (ts > latestTs) latestTs = ts;
-    }
-
-    if (latestTs === 0) latestTs = Date.now();
-    const cutoff = latestTs - timeRangeHours * 60 * 60 * 1000;
-
-    const processList = (list: typeof tultData, key: 'tult' | 'gku' | 'deli') => {
+    const addToList = (list: typeof tultData, station: 'tult' | 'gku' | 'deli') => {
       for (const item of list) {
+        if (!item.created_at) continue;
         const d = new Date(item.created_at);
-        const ts = d.getTime();
-        if (ts < cutoff) continue;
-
-        const timeKey = item.created_at.substring(0, 16);
-        const existing = timeMap.get(timeKey) || {
-          time: d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-          timestamp: ts,
-          tult: null,
-          gku: null,
-          deli: null,
-        };
-
-        existing[key] = item.pm25;
-        timeMap.set(timeKey, existing);
+        if (!isNaN(d.getTime())) {
+          points.push({
+            station,
+            time: d,
+            pm25: typeof item.pm25 === 'number' ? item.pm25 : null,
+          });
+        }
       }
     };
 
-    processList(tultData, 'tult');
-    processList(gkuData, 'gku');
-    processList(deliData, 'deli');
+    addToList(tultData, 'tult');
+    addToList(gkuData, 'gku');
+    addToList(deliData, 'deli');
 
-    return Array.from(timeMap.values()).sort((a, b) => a.timestamp - b.timestamp);
+    if (points.length === 0) {
+      return { chartData: [], activeDateRange: '-' };
+    }
+
+    // Determine latest reference timestamp
+    let maxTs = 0;
+    for (const p of points) {
+      const ts = p.time.getTime();
+      if (ts > maxTs) maxTs = ts;
+    }
+
+    // Align latest timestamp to exact top of hour (:00)
+    const endHourDate = new Date(maxTs);
+    endHourDate.setMinutes(0, 0, 0);
+    // If maxTs was past the hour, include up to the current hour mark
+    const endTs = endHourDate.getTime() + (new Date(maxTs).getMinutes() > 0 ? 60 * 60 * 1000 : 0);
+    const startTs = endTs - timeRangeHours * 60 * 60 * 1000;
+
+    // Generate hourly slots (e.g. 05:00, 06:00, 07:00...)
+    const slotMap = new Map<number, { count: Record<'tult' | 'gku' | 'deli', number>; sum: Record<'tult' | 'gku' | 'deli', number> }>();
+
+    for (let ts = startTs; ts <= endTs; ts += 60 * 60 * 1000) {
+      slotMap.set(ts, {
+        count: { tult: 0, gku: 0, deli: 0 },
+        sum: { tult: 0, gku: 0, deli: 0 },
+      });
+    }
+
+    // Aggregate each 2-minute raw point into the nearest hour slot (within 30 mins window)
+    for (const p of points) {
+      const pTs = p.time.getTime();
+      if (p.pm25 == null) continue;
+
+      // Find nearest hourly slot
+      const nearestHourTs = Math.round(pTs / (60 * 60 * 1000)) * (60 * 60 * 1000);
+      const slot = slotMap.get(nearestHourTs);
+      if (slot) {
+        slot.sum[p.station] += p.pm25;
+        slot.count[p.station] += 1;
+      }
+    }
+
+    const result: MultiStationPoint[] = [];
+    const dateSet = new Set<string>();
+
+    for (const [ts, slot] of slotMap.entries()) {
+      const d = new Date(ts);
+      const dateStr = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+      dateSet.add(dateStr);
+
+      const hourStr = String(d.getHours()).padStart(2, '0');
+      const timeLabel = `${hourStr}.00`;
+
+      result.push({
+        time: timeLabel,
+        date: dateStr,
+        fullTime: `${dateStr} ${timeLabel}`,
+        timestamp: ts,
+        tult: slot.count.tult > 0 ? Math.round(slot.sum.tult / slot.count.tult) : null,
+        gku: slot.count.gku > 0 ? Math.round(slot.sum.gku / slot.count.gku) : null,
+        deli: slot.count.deli > 0 ? Math.round(slot.sum.deli / slot.count.deli) : null,
+      });
+    }
+
+    const sorted = result.sort((a, b) => a.timestamp - b.timestamp);
+    const activeDates = Array.from(dateSet).join(' - ');
+
+    return { chartData: sorted, activeDateRange: activeDates };
   }, [tultData, gkuData, deliData, timeRangeHours]);
 
   return (
@@ -97,11 +148,11 @@ export function MultiStationComparisonChart({ timeRangeHours = 12 }: MultiStatio
               <Activity className="h-5 w-5 text-primary" />
               Komparasi PM2.5 Antar Stasiun ({timeRangeHours} Jam Terakhir)
             </CardTitle>
-            <CardDescription className="text-xs sm:text-sm">
-              Perbandingan tren partikulat PM2.5 (µg/m³) simultan: Gedung TULT, GKU, dan Gedung Deli.
+            <CardDescription className="text-xs sm:text-sm mt-0.5">
+              Rerata per jam ({activeDateRange}) &bull; Stasiun: TULT, GKU, dan Gedung Deli
             </CardDescription>
           </div>
-          <div className="flex items-center gap-3 text-xs font-mono">
+          <div className="flex items-center gap-2.5 text-xs font-mono">
             <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-[#0079FE]/10 text-[#0079FE] font-semibold border border-[#0079FE]/30">
               <span className="h-2 w-2 rounded-full bg-[#0079FE]"></span> TULT
             </span>
@@ -128,33 +179,45 @@ export function MultiStationComparisonChart({ timeRangeHours = 12 }: MultiStatio
           <ChartContainer config={comparisonChartConfig} className="min-h-[320px] h-[340px] w-full">
             <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.3} />
-              <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} minTickGap={30} />
+              <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} />
               <YAxis tickLine={false} axisLine={false} tickMargin={8} />
-              <ChartTooltip content={<ChartTooltipContent />} />
+              <ChartTooltip
+                content={
+                  <ChartTooltipContent
+                    labelFormatter={(_label, payload) => {
+                      const item = payload?.[0]?.payload as MultiStationPoint | undefined;
+                      return item?.fullTime || _label;
+                    }}
+                  />
+                }
+              />
               <ChartLegend content={<ChartLegendContent />} />
               <Line
                 type="monotone"
                 dataKey="tult"
                 stroke="#0079FE"
                 name="TULT (PM2.5)"
-                strokeWidth={2}
-                dot={false}
+                strokeWidth={2.5}
+                dot={{ r: 4 }}
+                connectNulls
               />
               <Line
                 type="monotone"
                 dataKey="gku"
                 stroke="#10b981"
                 name="GKU (PM2.5)"
-                strokeWidth={2}
-                dot={false}
+                strokeWidth={2.5}
+                dot={{ r: 4 }}
+                connectNulls
               />
               <Line
                 type="monotone"
                 dataKey="deli"
                 stroke="#f59e0b"
                 name="Gedung Deli (PM2.5)"
-                strokeWidth={2}
-                dot={false}
+                strokeWidth={2.5}
+                dot={{ r: 4 }}
+                connectNulls
               />
             </LineChart>
           </ChartContainer>

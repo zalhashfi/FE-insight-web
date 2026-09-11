@@ -81,7 +81,7 @@ async function fetchTelemetry(station: Station | undefined) {
 }
 export function TelemetryList() {
   const [selectedStationUuid, setSelectedStationUuid] = useState<string>('');
-  const [timeRangeHours, setTimeRangeHours] = useState<number>(12); // Default 12 jam terakhir
+  const [timeRangeHours, setTimeRangeHours] = useState<number>(6); // Default 6 jam terakhir
 
   const { data: stations, isLoading: isLoadingStations } = useQuery({
     queryKey: ['stations'],
@@ -176,7 +176,7 @@ export function TelemetryList() {
                 onClick={() => setTimeRangeHours(6)}
                 className="h-7 text-xs px-2.5"
               >
-                6 Jam
+                6 Jam (Default)
               </Button>
               <Button
                 type="button"
@@ -185,7 +185,7 @@ export function TelemetryList() {
                 onClick={() => setTimeRangeHours(12)}
                 className="h-7 text-xs px-2.5"
               >
-                12 Jam (Default)
+                12 Jam
               </Button>
               <Button
                 type="button"

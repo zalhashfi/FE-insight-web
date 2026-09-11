@@ -12,7 +12,7 @@ import { Link } from 'react-router';
 const SHOWCASE_STATIONS: MapStation[] = [
   {
     uuid: 'telkom-tult',
-    name: 'Gedung TULT (Telkom University)',
+    name: 'TULT',
     projectName: 'Telkom University AQMS',
     type: 'aqms',
     latitude: -6.968739,
@@ -24,7 +24,7 @@ const SHOWCASE_STATIONS: MapStation[] = [
   },
   {
     uuid: 'telkom-gku',
-    name: 'Gedung Kuliah Umum (GKU)',
+    name: 'GKU',
     projectName: 'Telkom University AQMS',
     type: 'aqms',
     latitude: -6.972739,
