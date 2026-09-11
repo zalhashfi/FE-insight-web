@@ -2,7 +2,7 @@ export const onRequest = async (context) => {
   const url = new URL(context.request.url);
   const targetUrl = new URL(
     url.pathname + url.search,
-    'https://backend.rizalhashfi.workers.dev'
+    context.env?.BACKEND_URL || 'https://biru-langit.com'
   );
   
   const modifiedRequest = new Request(targetUrl, context.request);

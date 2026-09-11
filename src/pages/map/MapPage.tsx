@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
+import { getTelkomStationsOverview } from '@/services/telkomApi';
 import { AirQualityMap, type MapStation } from '@/components/map/AirQualityMap';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +26,17 @@ interface RawDevice {
 }
 
 async function fetchStations(): Promise<MapStation[]> {
+  // Priority 1: Fetch live Telkom University stations (/api/telkom/all)
+  try {
+    const telkomStations = await getTelkomStationsOverview();
+    if (telkomStations && telkomStations.length > 0) {
+      return telkomStations;
+    }
+  } catch (err) {
+    console.warn('[MapPage] Telkom API unavailable, trying /api/devices fallback...', err);
+  }
+
+  // Priority 2: Fallback to internal /api/devices
   const res = await apiFetch('/api/devices');
   if (!res.ok) {
     throw new Error('Gagal mengambil data perangkat');
@@ -32,7 +44,6 @@ async function fetchStations(): Promise<MapStation[]> {
   const json = await res.json();
   const rawList: RawDevice[] = json.devices || json.stations || [];
 
-  // Map to MapStation with realistic baseline metrics if live telemetry not present
   return rawList.map((dev: RawDevice, index: number) => {
     const seed = index + 1;
     const pm25 = dev.pm25 ?? (25 + (seed * 17) % 65);

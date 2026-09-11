@@ -5,17 +5,20 @@ import { Radio, AlertCircle, Clock, Activity } from 'lucide-react';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '../components/ui/chart';
 import { Line, LineChart, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { apiFetch } from '@/lib/api';
+import { getTelkomStationsOverview, getTelkomStationHistory } from '@/services/telkomApi';
 
 type Station = {
   id: string;
   uuid: string;
   name: string;
   type: 'aqms';
+  locationKey?: string;
 };
 interface TelemetryItem {
   measured_at?: string;
   measuredAt?: string;
   timestamp?: string;
+  created_at?: string;
   pm25?: number;
   temperature?: number;
   humidity?: number;
@@ -23,6 +26,21 @@ interface TelemetryItem {
 }
 
 async function fetchStations(): Promise<Station[]> {
+  try {
+    const telkomStations = await getTelkomStationsOverview();
+    if (telkomStations && telkomStations.length > 0) {
+      return telkomStations.map((s) => ({
+        id: s.uuid,
+        uuid: s.uuid,
+        name: s.name,
+        type: 'aqms',
+        locationKey: s.locationKey,
+      }));
+    }
+  } catch {
+    // fallback
+  }
+
   const res = await apiFetch('/api/devices');
   if (!res.ok) throw new Error('Failed to fetch devices');
   const json = await res.json();
@@ -36,17 +54,22 @@ async function fetchUnregistered() {
   return json.data || [];
 }
 
-async function fetchTelemetry(stationUuid: string, sensorType: string = 'aqms') {
-  if (!stationUuid) return { type: sensorType, data: [] };
-  const res = await apiFetch(`/api/data/devices/${stationUuid}/data/${sensorType}?limit=100`);
+async function fetchTelemetry(station: Station | undefined) {
+  if (!station) return { type: 'aqms', data: [] };
+
+  if (station.locationKey) {
+    const data = await getTelkomStationHistory({ location: station.locationKey });
+    return { type: 'aqms', data };
+  }
+
+  const res = await apiFetch(`/api/data/devices/${station.uuid}/data/aqms?limit=100`);
   if (!res.ok) throw new Error('Failed to fetch telemetry');
   const json = await res.json();
   return {
-    type: json.sensor_type || sensorType,
+    type: json.sensor_type || 'aqms',
     data: json.data || [],
   };
 }
-
 export function DashboardHome() {
   const { user } = useAuth();
   
@@ -65,10 +88,9 @@ export function DashboardHome() {
 
   const firstStation = stations?.[0];
   const firstStationUuid = firstStation?.uuid || '';
-  const firstStationType = (firstStation?.type || 'aqms') as 'aqms';
   const { data: telemetryResult, isLoading: isLoadingTelemetry } = useQuery({
-    queryKey: ['telemetry', firstStationUuid, firstStationType],
-    queryFn: () => fetchTelemetry(firstStationUuid, firstStationType),
+    queryKey: ['telemetry', firstStationUuid],
+    queryFn: () => fetchTelemetry(firstStation),
     enabled: !!firstStationUuid,
   });
 
@@ -84,6 +106,7 @@ export function DashboardHome() {
   const chartData = [...telemetries].reverse().map((item: TelemetryItem) => {
     const rawTime = (typeof item.measured_at === 'string' && item.measured_at)
       || (typeof item.measuredAt === 'string' && item.measuredAt)
+      || (typeof item.created_at === 'string' && item.created_at)
       || (typeof item.timestamp === 'string' && item.timestamp);
     return {
       ...item,
@@ -91,7 +114,8 @@ export function DashboardHome() {
     };
   });
 
-  const lastDataTime = lastData ? (lastData.measured_at || lastData.measuredAt || lastData.timestamp) : null;
+  const lastDataTime = lastData ? (lastData.measured_at || lastData.measuredAt || lastData.created_at || lastData.timestamp) : null;
+
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
