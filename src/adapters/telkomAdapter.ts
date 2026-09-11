@@ -36,22 +36,22 @@ export type TelkomHistoryResponse = TelkomHistoryItemRaw[];
 // Known coordinates for Telkom University campus locations
 export const TELKOM_LOCATION_COORDS: Record<string, { lat: number; lng: number; name: string; description: string }> = {
   TULT: {
-    lat: -6.969854,
-    lng: 107.628283,
+    lat: -6.968739,
+    lng: 107.628128,
     name: 'Gedung TULT (Telkom University Landmark Tower)',
     description: 'Stasiun Pemantau Kualitas Udara Outdoor Gedung TULT Lt. 19 / Rooftop',
   },
   GKU: {
-    lat: -6.972382,
-    lng: 107.631526,
+    lat: -6.972739,
+    lng: 107.629506,
     name: 'Gedung Kuliah Umum (GKU)',
     description: 'Stasiun Pemantau Kualitas Udara Koridor & Area Terbuka GKU',
   },
   Deli: {
-    lat: -6.975412,
-    lng: 107.629815,
-    name: 'Gedung Deli (Fakultas Industri Kreatif)',
-    description: 'Stasiun Pemantau Kualitas Udara Gedung Deli / Area Selatan Kampus',
+    lat: -6.975472,
+    lng: 107.629619,
+    name: 'Gedung Deli',
+    description: 'Stasiun Pemantau Kualitas Udara Gedung Deli',
   },
 };
 

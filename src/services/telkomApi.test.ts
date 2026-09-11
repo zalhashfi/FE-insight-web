@@ -52,7 +52,7 @@ describe('telkomAdapter', () => {
     expect(tult?.temperature).toBeNull();
     expect(tult?.co2).toBe(522);
     expect(tult?.windSpeed).toBe(2.59);
-    expect(tult?.latitude).toBeCloseTo(-6.969854, 4);
+    expect(tult?.latitude).toBeCloseTo(-6.968739, 4);
 
     const gku = stations.find((s) => s.locationKey === 'GKU');
     expect(gku).toBeDefined();
