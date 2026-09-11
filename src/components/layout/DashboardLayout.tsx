@@ -3,6 +3,7 @@ import { NavLink, Outlet } from 'react-router';
 import { useAuth } from '../../contexts/AuthContext';
 import {
   LayoutDashboard,
+  MapPin,
   Radio,
   AlertCircle,
   Activity,
@@ -24,6 +25,7 @@ export function DashboardLayout() {
 
   const navItems = [
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'engineer', 'user'] },
+    { to: '/dashboard/map', label: 'Peta Spasial', icon: MapPin, roles: ['admin', 'engineer', 'user'] },
     { to: '/stations', label: 'Alat', icon: Radio, roles: ['admin', 'engineer'] },
     { to: '/stations/unregistered', label: 'Perlu Didaftarkan', icon: AlertCircle, roles: ['admin', 'engineer'] },
     { to: '/telemetry', label: 'Data Sensor', icon: Activity, roles: ['admin', 'engineer', 'user'] },

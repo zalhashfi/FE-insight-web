@@ -3,6 +3,7 @@ import { HeroSection } from '@/components/landing/HeroSection';
 import { PartnerSection } from '@/components/landing/PartnerSection';
 import { ProjectShowcase } from '@/components/landing/ProjectShowcase';
 import { LiveTelemetryPreview } from '@/components/landing/LiveTelemetryPreview';
+import { MapPreviewSection } from '@/components/landing/MapPreviewSection';
 import { Footer } from '@/components/landing/Footer';
 
 export default function LandingPage() {
@@ -17,6 +18,7 @@ export default function LandingPage() {
         <PartnerSection />
         <ProjectShowcase />
         <LiveTelemetryPreview />
+        <MapPreviewSection />
       </main>
 
       {/* 3. Footer */}

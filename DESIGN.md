@@ -13,14 +13,15 @@
 ## 2. Color Palette & Theming (Light & Dark Mode)
 
 ### Base Tokens
-- **Brand Primary**: Biru Langit / Blue `#0079FE` / `oklch(0.205 0 0)` (Light) & `oklch(0.922 0 0)` (Dark)
+- **Brand Primary**: Biru Langit Blue `#0079FE` / `oklch(0.58 0.21 245)` (Light) & `oklch(0.72 0.17 240)` (Dark)
+- **Primary Foreground**: Pure Crisp White `oklch(0.99 0 0)` (Light) & Deep Navy `oklch(0.12 0.02 240)` (Dark)
 - **Background**:
-  - *Light*: `oklch(1 0 0)` / Clean Pure White
-  - *Dark*: `oklch(0.145 0 0)` / Deep Neutral Zinc
+  - *Light*: `oklch(0.995 0.004 230)` / Fresh Crisp Sky Tint White
+  - *Dark*: `oklch(0.14 0.015 240)` / Deep Technical Navy
 - **Card Surface**:
   - *Light*: `oklch(1 0 0)` with `border-border/60` and `backdrop-blur`
-  - *Dark*: `oklch(0.205 0 0)` with subtle glass overlay
-
+  - *Dark*: `oklch(0.18 0.02 240)` with subtle glass overlay
+- **Ring / Focus**: `oklch(0.58 0.21 245)` (Light) & `oklch(0.72 0.17 240)` (Dark)
 ### Semantic Colors
 - **Success / Good Quality**: Emerald `#10b981` (misal: PM2.5 < 50 µg/m³, status normal)
 - **Warning / Moderate**: Amber `#f59e0b` (misal: PM2.5 51-100 µg/m³, peringatan dini)

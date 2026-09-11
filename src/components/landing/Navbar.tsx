@@ -40,6 +40,9 @@ export function Navbar() {
           <a href="#telemetry" onClick={scrollTo('telemetry')} className="hover:text-foreground transition-colors cursor-pointer">
             Data Telemetri
           </a>
+          <a href="#map-preview" onClick={scrollTo('map-preview')} className="hover:text-foreground transition-colors cursor-pointer">
+            Peta Spasial
+          </a>
           <a href="#tentang" onClick={scrollTo('tentang')} className="hover:text-foreground transition-colors cursor-pointer">
             Tentang
           </a>
