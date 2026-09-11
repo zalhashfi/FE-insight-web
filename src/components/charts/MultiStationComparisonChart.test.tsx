@@ -35,13 +35,13 @@ describe('MultiStationComparisonChart', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <MultiStationComparisonChart timeRangeHours={12} />
+        <MultiStationComparisonChart timeRangeHours={6} />
       </QueryClientProvider>
     );
 
     expect(screen.getByText(/Komparasi PM2.5 Antar Stasiun/i)).toBeInTheDocument();
-    expect(screen.getByText('TULT')).toBeInTheDocument();
-    expect(screen.getByText('GKU')).toBeInTheDocument();
-    expect(screen.getByText('Gedung Deli')).toBeInTheDocument();
+    expect(screen.getAllByText('TULT').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('GKU').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Gedung Deli').length).toBeGreaterThanOrEqual(1);
   });
 });

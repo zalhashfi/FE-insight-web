@@ -38,20 +38,20 @@ export const TELKOM_LOCATION_COORDS: Record<string, { lat: number; lng: number; 
   TULT: {
     lat: -6.968739,
     lng: 107.628128,
-    name: 'Gedung TULT (Telkom University Landmark Tower)',
-    description: 'Stasiun Pemantau Kualitas Udara Outdoor Gedung TULT Lt. 19 / Rooftop',
+    name: 'TULT',
+    description: 'Stasiun Pemantau Kualitas Udara Outdoor TULT',
   },
   GKU: {
     lat: -6.972739,
     lng: 107.629506,
-    name: 'Gedung Kuliah Umum (GKU)',
-    description: 'Stasiun Pemantau Kualitas Udara Koridor & Area Terbuka GKU',
+    name: 'GKU',
+    description: 'Stasiun Pemantau Kualitas Udara Outdoor GKU',
   },
   Deli: {
     lat: -6.975472,
     lng: 107.629619,
     name: 'Gedung Deli',
-    description: 'Stasiun Pemantau Kualitas Udara Gedung Deli',
+    description: 'Stasiun Pemantau Kualitas Udara Outdoor Gedung Deli',
   },
 };
 

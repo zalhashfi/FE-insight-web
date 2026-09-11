@@ -10,81 +10,117 @@ import { comparisonChartConfig, type MultiStationPoint } from '@/components/char
 import { useMemo } from 'react';
 
 const fallbackComparisonData: MultiStationPoint[] = [
-  { time: '04:00', timestamp: 1, tult: 42, gku: 55, deli: 68 },
-  { time: '06:00', timestamp: 2, tult: 48, gku: 62, deli: 75 },
-  { time: '08:00', timestamp: 3, tult: 58, gku: 76, deli: 89 },
-  { time: '10:00', timestamp: 4, tult: 55, gku: 72, deli: 95 },
-  { time: '12:00', timestamp: 5, tult: 62, gku: 78, deli: 99 },
-  { time: '14:00', timestamp: 6, tult: 58, gku: 74, deli: 92 },
-  { time: '16:00', timestamp: 7, tult: 52, gku: 70, deli: 85 },
+  { time: '10.00', date: '11 Sep 2026', fullTime: '11 Sep 2026 10.00', timestamp: 1, tult: 55, gku: 72, deli: 95 },
+  { time: '11.00', date: '11 Sep 2026', fullTime: '11 Sep 2026 11.00', timestamp: 2, tult: 60, gku: 75, deli: 97 },
+  { time: '12.00', date: '11 Sep 2026', fullTime: '11 Sep 2026 12.00', timestamp: 3, tult: 62, gku: 78, deli: 99 },
+  { time: '13.00', date: '11 Sep 2026', fullTime: '11 Sep 2026 13.00', timestamp: 4, tult: 59, gku: 76, deli: 94 },
+  { time: '14.00', date: '11 Sep 2026', fullTime: '11 Sep 2026 14.00', timestamp: 5, tult: 58, gku: 74, deli: 92 },
+  { time: '15.00', date: '11 Sep 2026', fullTime: '11 Sep 2026 15.00', timestamp: 6, tult: 54, gku: 71, deli: 88 },
+  { time: '16.00', date: '11 Sep 2026', fullTime: '11 Sep 2026 16.00', timestamp: 7, tult: 52, gku: 70, deli: 85 },
 ];
 
 export function LiveTelemetryPreview() {
-  const timeLow = useMemo(() => {
-    const d = new Date(Date.now() - 12 * 60 * 60 * 1000);
-    return d.toISOString().replace('T', ' ').slice(0, 19);
-  }, []);
-
   const { data: tultData = [] } = useQuery({
     queryKey: ['landing-history-TULT'],
-    queryFn: () => getTelkomStationHistory({ location: 'TULT', timeLow }),
+    queryFn: () => getTelkomStationHistory({ location: 'TULT' }),
     staleTime: 1000 * 60 * 2,
   });
 
   const { data: gkuData = [] } = useQuery({
     queryKey: ['landing-history-GKU'],
-    queryFn: () => getTelkomStationHistory({ location: 'GKU', timeLow }),
+    queryFn: () => getTelkomStationHistory({ location: 'GKU' }),
     staleTime: 1000 * 60 * 2,
   });
 
   const { data: deliData = [] } = useQuery({
     queryKey: ['landing-history-Deli'],
-    queryFn: () => getTelkomStationHistory({ location: 'Deli', timeLow }),
+    queryFn: () => getTelkomStationHistory({ location: 'Deli' }),
     staleTime: 1000 * 60 * 2,
   });
 
-  const chartData = useMemo<MultiStationPoint[]>(() => {
-    if (!tultData.length && !gkuData.length && !deliData.length) {
-      return fallbackComparisonData;
-    }
+  const { chartData, activeDateRange } = useMemo(() => {
+    const points: Array<{ station: 'tult' | 'gku' | 'deli'; time: Date; pm25: number | null }> = [];
 
-    const timeMap = new Map<string, MultiStationPoint>();
-
-    let latestTs = 0;
-    for (const item of [...tultData, ...gkuData, ...deliData]) {
-      const ts = new Date(item.created_at).getTime();
-      if (ts > latestTs) latestTs = ts;
-    }
-
-    if (latestTs === 0) latestTs = Date.now();
-    const cutoff = latestTs - 12 * 60 * 60 * 1000; // 12 jam terakhir
-
-    const processList = (list: typeof tultData, key: 'tult' | 'gku' | 'deli') => {
+    const addToList = (list: typeof tultData, station: 'tult' | 'gku' | 'deli') => {
       for (const item of list) {
+        if (!item.created_at) continue;
         const d = new Date(item.created_at);
-        const ts = d.getTime();
-        if (ts < cutoff) continue;
-
-        const timeKey = item.created_at.substring(0, 16);
-        const existing = timeMap.get(timeKey) || {
-          time: d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-          timestamp: ts,
-          tult: null,
-          gku: null,
-          deli: null,
-        };
-
-        existing[key] = item.pm25;
-        timeMap.set(timeKey, existing);
+        if (!isNaN(d.getTime())) {
+          points.push({
+            station,
+            time: d,
+            pm25: typeof item.pm25 === 'number' ? item.pm25 : null,
+          });
+        }
       }
     };
 
-    processList(tultData, 'tult');
-    processList(gkuData, 'gku');
-    processList(deliData, 'deli');
+    addToList(tultData, 'tult');
+    addToList(gkuData, 'gku');
+    addToList(deliData, 'deli');
 
-    const sorted = Array.from(timeMap.values()).sort((a, b) => a.timestamp - b.timestamp);
-    return sorted.length > 0 ? sorted : fallbackComparisonData;
+    if (points.length === 0) {
+      return { chartData: fallbackComparisonData, activeDateRange: '11 Sep 2026' };
+    }
+
+    let maxTs = 0;
+    for (const p of points) {
+      const ts = p.time.getTime();
+      if (ts > maxTs) maxTs = ts;
+    }
+
+    const endHourDate = new Date(maxTs);
+    endHourDate.setMinutes(0, 0, 0);
+    const endTs = endHourDate.getTime() + (new Date(maxTs).getMinutes() > 0 ? 60 * 60 * 1000 : 0);
+    const startTs = endTs - 6 * 60 * 60 * 1000; // 6 jam terakhir
+
+    const slotMap = new Map<number, { count: Record<'tult' | 'gku' | 'deli', number>; sum: Record<'tult' | 'gku' | 'deli', number> }>();
+
+    for (let ts = startTs; ts <= endTs; ts += 60 * 60 * 1000) {
+      slotMap.set(ts, {
+        count: { tult: 0, gku: 0, deli: 0 },
+        sum: { tult: 0, gku: 0, deli: 0 },
+      });
+    }
+
+    for (const p of points) {
+      const pTs = p.time.getTime();
+      if (p.pm25 == null) continue;
+
+      const nearestHourTs = Math.round(pTs / (60 * 60 * 1000)) * (60 * 60 * 1000);
+      const slot = slotMap.get(nearestHourTs);
+      if (slot) {
+        slot.sum[p.station] += p.pm25;
+        slot.count[p.station] += 1;
+      }
+    }
+
+    const result: MultiStationPoint[] = [];
+    const dateSet = new Set<string>();
+
+    for (const [ts, slot] of slotMap.entries()) {
+      const d = new Date(ts);
+      const dateStr = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+      dateSet.add(dateStr);
+
+      const hourStr = String(d.getHours()).padStart(2, '0');
+      const timeLabel = `${hourStr}.00`;
+
+      result.push({
+        time: timeLabel,
+        date: dateStr,
+        fullTime: `${dateStr} ${timeLabel}`,
+        timestamp: ts,
+        tult: slot.count.tult > 0 ? Math.round(slot.sum.tult / slot.count.tult) : null,
+        gku: slot.count.gku > 0 ? Math.round(slot.sum.gku / slot.count.gku) : null,
+        deli: slot.count.deli > 0 ? Math.round(slot.sum.deli / slot.count.deli) : null,
+      });
+    }
+
+    const sorted = result.sort((a, b) => a.timestamp - b.timestamp);
+    const activeDates = Array.from(dateSet).join(' - ');
+
+    return { chartData: sorted.length > 0 ? sorted : fallbackComparisonData, activeDateRange: activeDates || '11 Sep 2026' };
   }, [tultData, gkuData, deliData]);
 
   return (
@@ -97,11 +133,11 @@ export function LiveTelemetryPreview() {
               Komparasi PM2.5 Antar Stasiun
             </h2>
             <p className="text-muted-foreground text-sm sm:text-base">
-              Tren kualitas udara partikulat PM2.5 (µg/m³) 12 jam terakhir dari 3 stasiun pemantauan Telkom University.
+              Tren kualitas udara partikulat PM2.5 (µg/m³) 6 jam terakhir ({activeDateRange}) dari 3 stasiun pemantauan Telkom University.
             </p>
           </div>
 
-          <div className="flex items-center gap-2 text-xs font-mono">
+          <div className="flex items-center gap-2.5 text-xs font-mono">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#0079FE]/10 text-[#0079FE] font-semibold border border-[#0079FE]/30">
               <span className="h-2 w-2 rounded-full bg-[#0079FE]"></span> TULT
             </span>
@@ -123,7 +159,7 @@ export function LiveTelemetryPreview() {
                   Grafik Simultan 3 Titik (PM2.5)
                 </CardTitle>
                 <CardDescription className="font-mono text-xs mt-0.5">
-                  Gedung TULT, Gedung Kuliah Umum (GKU), Gedung Deli
+                  Tanggal: {activeDateRange} &bull; TULT, GKU, Gedung Deli
                 </CardDescription>
               </div>
               <Link to="/dashboard/telemetry">
@@ -138,7 +174,7 @@ export function LiveTelemetryPreview() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="p-3 rounded-lg bg-[#0079FE]/5 border border-[#0079FE]/20">
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>Gedung TULT</span>
+                  <span>TULT</span>
                   <span className="h-2 w-2 rounded-full bg-[#0079FE]"></span>
                 </div>
                 <div className="text-2xl font-bold font-mono text-foreground mt-1">58 <span className="text-xs font-normal text-muted-foreground">µg/m³</span></div>
@@ -146,7 +182,7 @@ export function LiveTelemetryPreview() {
               </div>
               <div className="p-3 rounded-lg bg-[#10b981]/5 border border-[#10b981]/20">
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>GKU (Kuliah Umum)</span>
+                  <span>GKU</span>
                   <span className="h-2 w-2 rounded-full bg-[#10b981]"></span>
                 </div>
                 <div className="text-2xl font-bold font-mono text-foreground mt-1">76 <span className="text-xs font-normal text-muted-foreground">µg/m³</span></div>
@@ -166,9 +202,18 @@ export function LiveTelemetryPreview() {
               <ChartContainer config={comparisonChartConfig} className="min-h-[300px] h-[340px] w-full">
                 <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.3} />
-                  <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} minTickGap={30} />
+                  <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} />
                   <YAxis tickLine={false} axisLine={false} tickMargin={8} />
-                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <ChartTooltip
+                    content={
+                      <ChartTooltipContent
+                        labelFormatter={(_label, payload) => {
+                          const item = payload?.[0]?.payload as MultiStationPoint | undefined;
+                          return item?.fullTime || _label;
+                        }}
+                      />
+                    }
+                  />
                   <ChartLegend content={<ChartLegendContent />} />
                   <Line
                     type="monotone"
@@ -176,7 +221,8 @@ export function LiveTelemetryPreview() {
                     stroke="#0079FE"
                     name="TULT (PM2.5)"
                     strokeWidth={2.5}
-                    dot={false}
+                    dot={{ r: 4 }}
+                    connectNulls
                   />
                   <Line
                     type="monotone"
@@ -184,7 +230,8 @@ export function LiveTelemetryPreview() {
                     stroke="#10b981"
                     name="GKU (PM2.5)"
                     strokeWidth={2.5}
-                    dot={false}
+                    dot={{ r: 4 }}
+                    connectNulls
                   />
                   <Line
                     type="monotone"
@@ -192,7 +239,8 @@ export function LiveTelemetryPreview() {
                     stroke="#f59e0b"
                     name="Gedung Deli (PM2.5)"
                     strokeWidth={2.5}
-                    dot={false}
+                    dot={{ r: 4 }}
+                    connectNulls
                   />
                 </LineChart>
               </ChartContainer>

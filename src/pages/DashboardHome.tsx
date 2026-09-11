@@ -170,9 +170,8 @@ export function DashboardHome() {
         </Card>
       </div>
 
-      {/* Multi-Station PM2.5 12h Comparison Chart */}
-      <MultiStationComparisonChart timeRangeHours={12} />
-
+      {/* Multi-Station PM2.5 6h Comparison Chart */}
+      <MultiStationComparisonChart timeRangeHours={6} />
       {stations && stations.length > 0 && (
         <Card className="col-span-4">
           <CardHeader>
