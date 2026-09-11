@@ -31,6 +31,9 @@ export function Navbar() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-muted-foreground">
+          <a href="#mitra" onClick={scrollTo('mitra')} className="hover:text-foreground transition-colors cursor-pointer">
+            Mitra
+          </a>
           <a href="#proyek" onClick={scrollTo('proyek')} className="hover:text-foreground transition-colors cursor-pointer">
             Studi Kasus
           </a>

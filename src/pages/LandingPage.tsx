@@ -1,5 +1,6 @@
 import { Navbar } from '@/components/landing/Navbar';
 import { HeroSection } from '@/components/landing/HeroSection';
+import { PartnerSection } from '@/components/landing/PartnerSection';
 import { ProjectShowcase } from '@/components/landing/ProjectShowcase';
 import { LiveTelemetryPreview } from '@/components/landing/LiveTelemetryPreview';
 import { Footer } from '@/components/landing/Footer';
@@ -13,6 +14,7 @@ export default function LandingPage() {
       {/* 2. Main Sections */}
       <main className="flex-1 flex flex-col">
         <HeroSection />
+        <PartnerSection />
         <ProjectShowcase />
         <LiveTelemetryPreview />
       </main>
