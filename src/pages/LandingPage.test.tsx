@@ -51,10 +51,9 @@ describe('LandingPage', () => {
 
     // 2. Partner Showcase
     expect(screen.getByText(/Mitra Riset & Institusi Pendukung/i)).toBeInTheDocument();
-    expect(screen.getByText(/Telkom University/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Telkom University/i).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText(/IPB University/i)).toBeInTheDocument();
     expect(screen.getByText(/Kanazawa University/i)).toBeInTheDocument();
-
     // 3. Project Showcase (SMP Telkom)
     expect(screen.getByText(/Implementasi di SMP Telkom/i)).toBeInTheDocument();
     expect(screen.getByText(/Titik Indoor/i)).toBeInTheDocument();
@@ -63,8 +62,11 @@ describe('LandingPage', () => {
     // 4. Live Telemetry
     expect(screen.getByText(/Grafik Telemetri Lapangan/i)).toBeInTheDocument();
     expect(screen.getByText(/PM 2.5 Terakhir/i)).toBeInTheDocument();
+    // 5. Map Preview Section (GIS)
+    expect(screen.getByText(/Pemetaan Kualitas Udara Real-Time/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Peta Spasial/i).length).toBeGreaterThanOrEqual(1);
 
-    // 5. Footer
+    // 6. Footer
     expect(screen.getAllByText(/PT Ekshalasi Langit Biru/i).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText(/Powered by Data. Driven by Impact./i)).toBeInTheDocument();
   });

@@ -13,6 +13,7 @@ import { UnregisteredDevices } from './pages/stations/UnregisteredDevices';
 import { TelemetryList } from './pages/telemetry/TelemetryList';
 import { FirmwarePage } from './pages/firmware/FirmwarePage';
 import { UserList } from './pages/users/UserList';
+import { MapPage } from './pages/map/MapPage';
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ function App() {
               <Route element={<ProtectedRoute />}>
                 <Route element={<DashboardLayout />}>
                   <Route path="/dashboard" element={<DashboardHome />} />
+                  <Route path="/dashboard/map" element={<MapPage />} />
                   <Route path="/stations" element={<StationList />} />
                   <Route path="/stations/unregistered" element={<UnregisteredDevices />} />
                   <Route path="/telemetry" element={<TelemetryList />} />
