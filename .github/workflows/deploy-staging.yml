@@ -9,8 +9,8 @@ concurrency:
   group: staging-deployment
   cancel-in-progress: true
 
-# Least privilege: this workflow only reads code; the SSH deploy uses its own key.
-# The remote clone happens on the VPS, outside the runner, so no write token is needed.
+# Least privilege: this workflow only reads code; deploys go through the
+# Cloudflare API token stored in repo secrets.
 permissions:
   contents: read
 
@@ -33,33 +33,36 @@ jobs:
       - run: npm run build
 
   deploy:
-    name: Deploy to Staging Server
+    name: Deploy to Staging Preview
     needs: verify
     runs-on: ubuntu-latest
     # Job-level `if` cannot read `env`/`secrets`, and a step-level `if` cannot read
     # `secrets` either. The secret is mapped to step `env` and the step guards on it,
     # so an unconfigured repo reports the step as skipped (green run), not failed.
     steps:
-      - name: Pull latest code and rebuild containers over SSH
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+      # `--branch=staging` publishes to the stable preview
+      # `staging.fe-insight-web.pages.dev` (public). It runs from the repo root
+      # on purpose: wrangler uploads `functions/api/` alongside `dist/`, so the
+      # `/api/` proxy runs on the same Functions runtime as production — staging
+      # now tests exactly what production ships.
+      - name: Deploy to Cloudflare Pages preview
         # `secrets` is not an allowed context in `if` either, so it is mapped to
         # step env (env IS allowed) and the guard reads env. Skipped until configured.
-        if: ${{ env.STAGING_SSH_HOST != '' }}
+        if: ${{ env.HAS_CF_TOKEN != '' }}
         env:
-          STAGING_SSH_HOST: ${{ secrets.STAGING_SSH_HOST }}
-        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262 # v1.0.3
+          HAS_CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        uses: cloudflare/wrangler-action@9acf94ace14e7dc412b076f2c5c20b8ce93c79cd # v3
         with:
-          host: ${{ secrets.STAGING_SSH_HOST }}
-          username: ${{ secrets.STAGING_SSH_USER }}
-          key: ${{ secrets.STAGING_SSH_KEY }}
-          port: ${{ secrets.STAGING_SSH_PORT || '22' }}
-          script: |
-            set -e
-            mkdir -p /opt/fe-insight-web
-            cd /opt/fe-insight-web
-            if [ ! -d .git ]; then
-              git clone https://github.com/${{ github.repository }}.git .
-            fi
-            git fetch --all
-            git reset --hard origin/${{ github.ref_name }}
-            docker compose -f docker-compose.staging.yml up -d --build --remove-orphans
-            docker image prune -f
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=fe-insight-web --branch=staging
