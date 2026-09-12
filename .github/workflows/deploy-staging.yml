@@ -30,13 +30,16 @@ jobs:
     name: Deploy to Staging Server
     needs: verify
     runs-on: ubuntu-latest
-    # NOTE: neither `env` nor `secrets` is an allowed context in a job-level `if`,
-    # so the skip is done in the step guard below. Steps whose `if` is false are
-    # reported as skipped, so an unconfigured repo yields a green run.
+    # Job-level `if` cannot read `env`/`secrets`, and a step-level `if` cannot read
+    # `secrets` either. The secret is mapped to step `env` and the step guards on it,
+    # so an unconfigured repo reports the step as skipped (green run), not failed.
     steps:
       - name: Pull latest code and rebuild containers over SSH
-        # Skipped (not failed) until STAGING_SSH_HOST is configured.
-        if: ${{ secrets.STAGING_SSH_HOST != '' }}
+        # `secrets` is not an allowed context in `if` either, so it is mapped to
+        # step env (env IS allowed) and the guard reads env. Skipped until configured.
+        if: ${{ env.STAGING_SSH_HOST != '' }}
+        env:
+          STAGING_SSH_HOST: ${{ secrets.STAGING_SSH_HOST }}
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.STAGING_SSH_HOST }}
