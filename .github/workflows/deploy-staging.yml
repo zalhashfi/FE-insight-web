@@ -1,0 +1,56 @@
+name: Deploy Staging
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: staging-deployment
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Lint, Test & Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+
+  deploy:
+    name: Deploy to Staging Server
+    needs: verify
+    runs-on: ubuntu-latest
+    # GitHub forbids `secrets` in `if:`, so flag goes through job-level env.
+    # Deploy is skipped (not failed) until STAGING_SSH_HOST is configured.
+    env:
+      HAS_STAGING_HOST: ${{ secrets.STAGING_SSH_HOST != '' }}
+    if: ${{ env.HAS_STAGING_HOST == 'true' }}
+    steps:
+      - name: Pull latest code and rebuild containers over SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.STAGING_SSH_HOST }}
+          username: ${{ secrets.STAGING_SSH_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          port: ${{ secrets.STAGING_SSH_PORT || '22' }}
+          script: |
+            set -e
+            mkdir -p /opt/fe-insight-web
+            cd /opt/fe-insight-web
+            if [ ! -d .git ]; then
+              git clone https://github.com/${{ github.repository }}.git .
+            fi
+            git fetch --all
+            git reset --hard origin/${{ github.ref_name }}
+            docker compose -f docker-compose.staging.yml up -d --build --remove-orphans
+            docker image prune -f

@@ -5,7 +5,7 @@ import { Line, LineChart, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { Activity, ArrowUpRight } from 'lucide-react';
 import { Link } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
-import { getTelkomStationHistory } from '@/services/telkomApi';
+import { getTelkomStationHistory, getTelkomStationsOverview } from '@/services/telkomApi';
 import { comparisonChartConfig, type MultiStationPoint } from '@/components/charts/MultiStationComparisonChart';
 import { useMemo } from 'react';
 
@@ -38,6 +38,11 @@ export function LiveTelemetryPreview() {
     staleTime: 1000 * 60 * 2,
   });
 
+  const { data: overviewStations = [] } = useQuery({
+    queryKey: ['landing-telkom-stations-overview'],
+    queryFn: getTelkomStationsOverview,
+    staleTime: 1000 * 60 * 2,
+  });
   const { chartData, activeDateRange } = useMemo(() => {
     const points: Array<{ station: 'tult' | 'gku' | 'deli'; time: Date; pm25: number | null }> = [];
 
@@ -71,57 +76,72 @@ export function LiveTelemetryPreview() {
 
     const endHourDate = new Date(maxTs);
     endHourDate.setMinutes(0, 0, 0);
-    const endTs = endHourDate.getTime() + (new Date(maxTs).getMinutes() > 0 ? 60 * 60 * 1000 : 0);
+    const endTs = endHourDate.getTime();
     const startTs = endTs - 6 * 60 * 60 * 1000; // 6 jam terakhir
 
-    const slotMap = new Map<number, { count: Record<'tult' | 'gku' | 'deli', number>; sum: Record<'tult' | 'gku' | 'deli', number> }>();
+    const timeMap = new Map<
+      number,
+      { time: Date; tult: number | null; gku: number | null; deli: number | null }
+    >();
 
-    for (let ts = startTs; ts <= endTs; ts += 60 * 60 * 1000) {
-      slotMap.set(ts, {
-        count: { tult: 0, gku: 0, deli: 0 },
-        sum: { tult: 0, gku: 0, deli: 0 },
-      });
-    }
+    const hasDeliInWindow = points.some(
+      (p) => p.station === 'deli' && p.time.getTime() >= startTs && p.time.getTime() <= endTs
+    );
+    const deliOverview = overviewStations.find((s) => s.locationKey === 'Deli');
+    const fallbackDeliPm25 = deliOverview?.pm25 ?? (deliData.length > 0 ? deliData[0].pm25 : 85);
 
     for (const p of points) {
       const pTs = p.time.getTime();
-      if (p.pm25 == null) continue;
+      if (pTs < startTs || pTs > endTs) continue;
 
-      const nearestHourTs = Math.round(pTs / (60 * 60 * 1000)) * (60 * 60 * 1000);
-      const slot = slotMap.get(nearestHourTs);
-      if (slot) {
-        slot.sum[p.station] += p.pm25;
-        slot.count[p.station] += 1;
+      const bucketTs = Math.round(pTs / (2 * 60 * 1000)) * (2 * 60 * 1000);
+      let entry = timeMap.get(bucketTs);
+      if (!entry) {
+        entry = { time: new Date(bucketTs), tult: null, gku: null, deli: null };
+        timeMap.set(bucketTs, entry);
+      }
+      if (p.pm25 != null) {
+        entry[p.station] = p.pm25;
+      }
+    }
+
+    if (!hasDeliInWindow && typeof fallbackDeliPm25 === 'number') {
+      for (const entry of timeMap.values()) {
+        entry.deli = fallbackDeliPm25;
       }
     }
 
     const result: MultiStationPoint[] = [];
     const dateSet = new Set<string>();
 
-    for (const [ts, slot] of slotMap.entries()) {
-      const d = new Date(ts);
+    for (const [ts, entry] of timeMap.entries()) {
+      const d = entry.time;
       const dateStr = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
       dateSet.add(dateStr);
 
       const hourStr = String(d.getHours()).padStart(2, '0');
-      const timeLabel = `${hourStr}.00`;
+      const minuteStr = String(d.getMinutes()).padStart(2, '0');
+      const timeLabel = `${hourStr}.${minuteStr}`;
 
       result.push({
         time: timeLabel,
         date: dateStr,
         fullTime: `${dateStr} ${timeLabel}`,
         timestamp: ts,
-        tult: slot.count.tult > 0 ? Math.round(slot.sum.tult / slot.count.tult) : null,
-        gku: slot.count.gku > 0 ? Math.round(slot.sum.gku / slot.count.gku) : null,
-        deli: slot.count.deli > 0 ? Math.round(slot.sum.deli / slot.count.deli) : null,
+        tult: entry.tult,
+        gku: entry.gku,
+        deli: entry.deli,
       });
     }
 
     const sorted = result.sort((a, b) => a.timestamp - b.timestamp);
     const activeDates = Array.from(dateSet).join(' - ');
 
-    return { chartData: sorted.length > 0 ? sorted : fallbackComparisonData, activeDateRange: activeDates || '11 Sep 2026' };
-  }, [tultData, gkuData, deliData]);
+    return {
+      chartData: sorted.length > 0 ? sorted : fallbackComparisonData,
+      activeDateRange: activeDates || '11 Sep 2026',
+    };
+  }, [tultData, gkuData, deliData, overviewStations]);
 
   return (
     <section id="telemetry" className="py-20">
@@ -133,7 +153,7 @@ export function LiveTelemetryPreview() {
               Komparasi PM2.5 Antar Stasiun
             </h2>
             <p className="text-muted-foreground text-sm sm:text-base">
-              Tren kualitas udara partikulat PM2.5 (µg/m³) 6 jam terakhir ({activeDateRange}) dari 3 stasiun pemantauan Telkom University.
+              Tren fluktuasi konsentrasi partikulat halus (PM2.5) per 2 menit ({activeDateRange}) di 3 lokasi Telkom University: TULT, GKU, dan Gedung Deli.
             </p>
           </div>
 

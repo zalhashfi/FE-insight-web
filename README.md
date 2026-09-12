@@ -2,14 +2,14 @@
 
 A modern, highly-interactive web frontend built with React, Vite, and TypeScript. This project features robust 3D visualizations, sleek UI components, and performant data fetching.
 
-## Key Features
-
+- **Dynamic Spatial Map** powered by Leaflet with ISPU color indexing (Baik/Sedang/Tidak Sehat)
+- **Multi-Station Comparison Chart** comparing 3 Telkom University locations (TULT, GKU, Gedung Deli) with 2-minute interval resolution
+- **Live Environmental Telemetry** integrating directly with live AQMS sensors via Biru Langit API
 - **Dynamic Routing** with React Router 7
 - **3D Renderings** powered by Three.js and React Three Fiber
 - **Modern UI Components** using Shadcn, Lucide React, and Tailwind CSS v4
 - **Optimized Data Fetching** with TanStack React Query
-- **Lightning-fast Dev Environment** with Vite
-
+- **Staging & Production Ready** via Docker multi-stage Nginx and automated GitHub Actions CI/CD
 ## Tech Stack
 
 - **Language**: TypeScript
@@ -107,7 +107,36 @@ npx vitest --ui
 
 ## Deployment
 
-### Hostinger Shared Hosting (Production SPA)
+### 1. Automated Staging Deployment (GitHub Actions + Docker)
+Setiap `git push` ke branch `main` akan otomatis:
+1. Menjalankan linter (`oxlint`), unit test (`vitest`), dan build TypeScript.
+2. Men-deploy ke VPS staging via SSH menggunakan Docker Compose (build ulang image Nginx).
+
+**Prasyarat di VPS staging:** Docker Engine + plugin `docker compose`, akses SSH (user dengan izin `docker`), dan direktori deploy `/opt/fe-insight-web` (dibuat otomatis oleh workflow).
+
+**GitHub Secrets yang perlu dikonfigurasi di repository** (Settings → Secrets and variables → Actions):
+- `STAGING_SSH_HOST`: IP atau domain VPS staging.
+- `STAGING_SSH_USER`: Username SSH (misal `ubuntu` atau `root`).
+- `STAGING_SSH_KEY`: Private SSH key (format OpenSSH). Public key-nya daftarkan di `~/.ssh/authorized_keys` VPS.
+- `STAGING_SSH_PORT`: Port SSH (opsional, default `22`).
+
+Setelah merge ke `main`, cek progres di tab **Actions**. Jika secrets belum diisi, job `verify` tetap berjalan dan hanya job `deploy` yang gagal.
+
+### 2. Manual Server Deployment via Docker Compose
+Jalankan langsung di server staging:
+```bash
+docker compose -f docker-compose.staging.yml up -d --build
+```
+Aplikasi akan berjalan pada port `8080` lengkap dengan Nginx reverse proxy ke API live `biru-langit.com`.
+
+### 3. Cloudflare Pages / Static Hosting
+
+```bash
+npm run build
+npx wrangler pages deploy dist
+```
+
+### 4. Hostinger Shared Hosting (Production SPA)
 1. Jalankan build produksi:
    ```bash
    npm run build
@@ -124,14 +153,6 @@ npx vitest --ui
      RewriteRule . /index.html [L]
    </IfModule>
    ```
-
-### Cloudflare Pages / Static Hosting
-
-```bash
-npm run build
-npx wrangler pages deploy dist
-```
-
 ## Architecture & Directory Structure
 
 ```
