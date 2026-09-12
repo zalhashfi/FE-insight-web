@@ -124,6 +124,13 @@ npm run build
 npx wrangler pages deploy dist --project-name=fe-insight-web --branch=staging
 ```
 
+### Opsi B: VPS via Docker Compose (fallback)
+Jalur lama tetap tersedia sebagai fallback bila Pages tidak dapat dipakai (deploy otomatis via SSH sudah digantikan bagian 1 di atas; jalankan manual di VPS):
+```bash
+docker compose -f docker-compose.staging.yml up -d --build
+```
+Aplikasi berjalan pada port `8080` dengan Nginx reverse proxy ke API live `biru-langit.com`.
+
 ### 3. Production Release via Tag (GitHub Actions → Cloudflare Pages)
 Push tag `vX.Y.Z` untuk membuat GitHub Release sekaligus deploy ke production (`insight.biru-langit.com`, custom domain di dashboard Pages project `fe-insight-web`) — butuh secrets `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`:
 ```bash
