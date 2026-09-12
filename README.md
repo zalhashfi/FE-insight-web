@@ -107,30 +107,32 @@ npx vitest --ui
 
 ## Deployment
 
-### 1. Automated Staging Deployment (GitHub Actions + Docker)
+### 1. Automated Staging Deployment (GitHub Actions → Cloudflare Pages Preview)
 Setiap `git push` ke branch `main` akan otomatis:
 1. Menjalankan linter (`oxlint`), unit test (`vitest`), dan build TypeScript.
-2. Men-deploy ke VPS staging via SSH menggunakan Docker Compose (build ulang image Nginx).
+2. Men-deploy ke preview branch `staging` di Cloudflare Pages (`staging.fe-insight-web.pages.dev`, publik) — termasuk `functions/api/` sehingga staging menguji runtime Functions yang identik dengan production.
 
-**Prasyarat di VPS staging:** Docker Engine + plugin `docker compose`, akses SSH (user dengan izin `docker`), dan direktori deploy `/opt/fe-insight-web` (dibuat otomatis oleh workflow).
+**GitHub Secrets yang perlu dikonfigurasi di repository** (Settings → Secrets and variables → Actions, sama dengan production):
+- `CLOUDFLARE_API_TOKEN`: API token (Account / Cloudflare Pages / Edit).
+- `CLOUDFLARE_ACCOUNT_ID`: Account ID Cloudflare.
 
-**GitHub Secrets yang perlu dikonfigurasi di repository** (Settings → Secrets and variables → Actions):
-- `STAGING_SSH_HOST`: IP atau domain VPS staging.
-- `STAGING_SSH_USER`: Username SSH (misal `ubuntu` atau `root`).
-- `STAGING_SSH_KEY`: Private SSH key (format OpenSSH). Public key-nya daftarkan di `~/.ssh/authorized_keys` VPS.
-- `STAGING_SSH_PORT`: Port SSH (opsional, default `22`).
+Jika secrets belum diisi, job `verify` tetap berjalan dan step deploy dilaporkan `skipped` (run hijau).
 
-Setelah merge ke `main`, cek progres di tab **Actions**. Jika secrets belum diisi, job `verify` tetap berjalan dan hanya job `deploy` yang gagal.
+### 2. Manual Staging Preview Deployment
+```bash
+npm run build
+npx wrangler pages deploy dist --project-name=fe-insight-web --branch=staging
+```
 
-### 2. Manual Server Deployment via Docker Compose
-Jalankan langsung di server staging:
+### Opsi B: VPS via Docker Compose (fallback)
+Jalur lama tetap tersedia sebagai fallback bila Pages tidak dapat dipakai (deploy otomatis via SSH sudah digantikan bagian 1 di atas; jalankan manual di VPS):
 ```bash
 docker compose -f docker-compose.staging.yml up -d --build
 ```
-Aplikasi akan berjalan pada port `8080` lengkap dengan Nginx reverse proxy ke API live `biru-langit.com`.
+Aplikasi berjalan pada port `8080` dengan Nginx reverse proxy ke API live `biru-langit.com`.
 
 ### 3. Production Release via Tag (GitHub Actions → Cloudflare Pages)
-Push tag `vX.Y.Z` untuk membuat GitHub Release sekaligus deploy ke Pages project `fe-insight-web` (butuh secrets `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`):
+Push tag `vX.Y.Z` untuk membuat GitHub Release sekaligus deploy ke production (`insight.biru-langit.com`, custom domain di dashboard Pages project `fe-insight-web`) — butuh secrets `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`:
 ```bash
 git tag v0.0.1 && git push origin v0.0.1
 ```
