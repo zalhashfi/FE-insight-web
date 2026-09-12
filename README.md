@@ -129,14 +129,17 @@ docker compose -f docker-compose.staging.yml up -d --build
 ```
 Aplikasi akan berjalan pada port `8080` lengkap dengan Nginx reverse proxy ke API live `biru-langit.com`.
 
-### 3. Cloudflare Pages / Static Hosting
-
+### 3. Production Release via Tag (GitHub Actions → Cloudflare Pages)
+Push tag `vX.Y.Z` untuk membuat GitHub Release sekaligus deploy ke Pages project `fe-insight-web` (butuh secrets `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`):
+```bash
+git tag v0.0.1 && git push origin v0.0.1
+```
+### 4. Manual Cloudflare Pages / Static Hosting
 ```bash
 npm run build
-npx wrangler pages deploy dist
+npx wrangler pages deploy dist --project-name=fe-insight-web
 ```
-
-### 4. Hostinger Shared Hosting (Production SPA)
+### 5. Hostinger Shared Hosting (Production SPA)
 1. Jalankan build produksi:
    ```bash
    npm run build

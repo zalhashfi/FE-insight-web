@@ -1,0 +1,72 @@
+name: Deploy Production
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+concurrency:
+  group: production-deployment
+  cancel-in-progress: true
+
+# Least privilege: verify only reads code; the release job overrides to write
+# (needed to create the GitHub Release).
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Lint, Test & Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+
+  release:
+    name: Release & Deploy to Production
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+      # Guard pattern (proven in PR #40): `secrets` is not an allowed context in
+      # step `if`, so the secret is mapped to step env (env IS allowed) and the
+      # guard reads env. Without Cloudflare secrets the run stays green with
+      # these steps skipped instead of failed.
+      - name: Create GitHub Release
+        if: ${{ env.HAS_CF_TOKEN != '' }}
+        env:
+          HAS_CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
+        with:
+          generate_release_notes: true
+
+      # Runs from the repo root on purpose: wrangler uploads `functions/api/`
+      # alongside `dist/`, so the `/api/` proxy stays alive on production.
+      - name: Deploy to Cloudflare Pages
+        if: ${{ env.HAS_CF_TOKEN != '' }}
+        env:
+          HAS_CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        uses: cloudflare/wrangler-action@9acf94ace14e7dc412b076f2c5c20b8ce93c79cd # v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=fe-insight-web
