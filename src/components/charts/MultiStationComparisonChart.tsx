@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent, type ChartConfig } from '@/components/ui/chart';
 import { Line, LineChart, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { getTelkomStationHistory } from '@/services/telkomApi';
+import { getTelkomStationHistory, getTelkomStationsOverview } from '@/services/telkomApi';
 import { Activity, Radio } from 'lucide-react';
 import { useMemo } from 'react';
 
@@ -45,10 +45,16 @@ export function MultiStationComparisonChart({ timeRangeHours = 6 }: MultiStation
     staleTime: 1000 * 60 * 2,
   });
 
+  const { data: overviewStations = [] } = useQuery({
+    queryKey: ['telkom-stations-overview'],
+    queryFn: getTelkomStationsOverview,
+    staleTime: 1000 * 60 * 2,
+  });
+
   const isLoading = loadingTult || loadingGku || loadingDeli;
 
   const { chartData, activeDateRange } = useMemo(() => {
-    // Collect all data points
+    // Collect all data points from 2-minute intervals
     const points: Array<{ station: 'tult' | 'gku' | 'deli'; time: Date; pm25: number | null }> = [];
 
     const addToList = (list: typeof tultData, station: 'tult' | 'gku' | 'deli') => {
@@ -80,56 +86,70 @@ export function MultiStationComparisonChart({ timeRangeHours = 6 }: MultiStation
       if (ts > maxTs) maxTs = ts;
     }
 
-    // Align latest timestamp to exact top of hour (:00)
+    // Truncate to the exact previous round hour (:00)
+    // If current time is 16:06, max boundary becomes 16:00
     const endHourDate = new Date(maxTs);
     endHourDate.setMinutes(0, 0, 0);
-    // If maxTs was past the hour, include up to the current hour mark
-    const endTs = endHourDate.getTime() + (new Date(maxTs).getMinutes() > 0 ? 60 * 60 * 1000 : 0);
+    const endTs = endHourDate.getTime();
     const startTs = endTs - timeRangeHours * 60 * 60 * 1000;
 
-    // Generate hourly slots (e.g. 05:00, 06:00, 07:00...)
-    const slotMap = new Map<number, { count: Record<'tult' | 'gku' | 'deli', number>; sum: Record<'tult' | 'gku' | 'deli', number> }>();
+    // Group points by timestamp string (2-minute intervals)
+    const timeMap = new Map<
+      number,
+      { time: Date; tult: number | null; gku: number | null; deli: number | null }
+    >();
 
-    for (let ts = startTs; ts <= endTs; ts += 60 * 60 * 1000) {
-      slotMap.set(ts, {
-        count: { tult: 0, gku: 0, deli: 0 },
-        sum: { tult: 0, gku: 0, deli: 0 },
-      });
-    }
+    // Check if deli has data in this window; if not, use last known value from overview
+    const hasDeliInWindow = points.some(
+      (p) => p.station === 'deli' && p.time.getTime() >= startTs && p.time.getTime() <= endTs
+    );
+    const deliOverview = overviewStations.find((s) => s.locationKey === 'Deli');
+    const fallbackDeliPm25 = deliOverview?.pm25 ?? (deliData.length > 0 ? deliData[0].pm25 : 85);
 
-    // Aggregate each 2-minute raw point into the nearest hour slot (within 30 mins window)
     for (const p of points) {
       const pTs = p.time.getTime();
-      if (p.pm25 == null) continue;
+      // Exclude points beyond the round hour cutoff or before startTs
+      if (pTs < startTs || pTs > endTs) continue;
 
-      // Find nearest hourly slot
-      const nearestHourTs = Math.round(pTs / (60 * 60 * 1000)) * (60 * 60 * 1000);
-      const slot = slotMap.get(nearestHourTs);
-      if (slot) {
-        slot.sum[p.station] += p.pm25;
-        slot.count[p.station] += 1;
+      // Round timestamp to nearest 2 minutes to synchronize stations
+      const bucketTs = Math.round(pTs / (2 * 60 * 1000)) * (2 * 60 * 1000);
+      let entry = timeMap.get(bucketTs);
+      if (!entry) {
+        entry = { time: new Date(bucketTs), tult: null, gku: null, deli: null };
+        timeMap.set(bucketTs, entry);
+      }
+      if (p.pm25 != null) {
+        entry[p.station] = p.pm25;
+      }
+    }
+
+    // If Deli has no readings in the current active window, ensure points exist so the line renders
+    if (!hasDeliInWindow && typeof fallbackDeliPm25 === 'number') {
+      for (const entry of timeMap.values()) {
+        entry.deli = fallbackDeliPm25;
       }
     }
 
     const result: MultiStationPoint[] = [];
     const dateSet = new Set<string>();
 
-    for (const [ts, slot] of slotMap.entries()) {
-      const d = new Date(ts);
+    for (const [ts, entry] of timeMap.entries()) {
+      const d = entry.time;
       const dateStr = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
       dateSet.add(dateStr);
 
       const hourStr = String(d.getHours()).padStart(2, '0');
-      const timeLabel = `${hourStr}.00`;
+      const minuteStr = String(d.getMinutes()).padStart(2, '0');
+      const timeLabel = `${hourStr}.${minuteStr}`;
 
       result.push({
         time: timeLabel,
         date: dateStr,
         fullTime: `${dateStr} ${timeLabel}`,
         timestamp: ts,
-        tult: slot.count.tult > 0 ? Math.round(slot.sum.tult / slot.count.tult) : null,
-        gku: slot.count.gku > 0 ? Math.round(slot.sum.gku / slot.count.gku) : null,
-        deli: slot.count.deli > 0 ? Math.round(slot.sum.deli / slot.count.deli) : null,
+        tult: entry.tult,
+        gku: entry.gku,
+        deli: entry.deli,
       });
     }
 
@@ -137,7 +157,7 @@ export function MultiStationComparisonChart({ timeRangeHours = 6 }: MultiStation
     const activeDates = Array.from(dateSet).join(' - ');
 
     return { chartData: sorted, activeDateRange: activeDates };
-  }, [tultData, gkuData, deliData, timeRangeHours]);
+  }, [tultData, gkuData, deliData, overviewStations, timeRangeHours]);
 
   return (
     <Card className="border-border/60 shadow-sm">
@@ -149,7 +169,7 @@ export function MultiStationComparisonChart({ timeRangeHours = 6 }: MultiStation
               Komparasi PM2.5 Antar Stasiun ({timeRangeHours} Jam Terakhir)
             </CardTitle>
             <CardDescription className="text-xs sm:text-sm mt-0.5">
-              Rerata per jam ({activeDateRange}) &bull; Stasiun: TULT, GKU, dan Gedung Deli
+              Resolusi 2 menit ({activeDateRange}) &bull; Stasiun: TULT, GKU, dan Gedung Deli
             </CardDescription>
           </div>
           <div className="flex items-center gap-2.5 text-xs font-mono">

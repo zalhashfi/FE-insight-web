@@ -57,10 +57,10 @@ export function ProjectShowcase() {
                 <div className="p-3.5 rounded-lg bg-muted/50 border border-border/40 space-y-1.5">
                   <div className="flex items-center gap-2 font-semibold text-sm text-foreground">
                     <BellRing className="w-4 h-4 text-amber-500" />
-                    <span>Titik Outdoor & EWS</span>
+                    <span>Titik Outdoor</span>
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Dipasang pada atap sekolah untuk memantau kualitas udara luar. Dilengkapi peringatan dini agar status udara langsung terlihat.
+                    Dipasang pada atap sekolah untuk memantau kualitas udara luar.
                   </p>
                 </div>
               </div>

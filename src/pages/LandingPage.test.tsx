@@ -62,7 +62,7 @@ describe('LandingPage', () => {
     // 3. Project Showcase (SMP Telkom)
     expect(screen.getByText(/Implementasi di SMP Telkom/i)).toBeInTheDocument();
     expect(screen.getByText(/Titik Indoor/i)).toBeInTheDocument();
-    expect(screen.getByText(/Titik Outdoor & EWS/i)).toBeInTheDocument();
+    expect(screen.getByText(/Titik Outdoor/i)).toBeInTheDocument();
 
     // 4. Live Telemetry
     expect(screen.getByText(/Komparasi PM2.5 Antar Stasiun/i)).toBeInTheDocument();
