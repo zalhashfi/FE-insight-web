@@ -9,14 +9,20 @@ concurrency:
   group: staging-deployment
   cancel-in-progress: true
 
+# Least privilege: this workflow only reads code; the SSH deploy uses its own key.
+# The remote clone happens on the VPS, outside the runner, so no write token is needed.
+permissions:
+  contents: read
+
+
 jobs:
   verify:
     name: Lint, Test & Build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: npm
@@ -40,7 +46,7 @@ jobs:
         if: ${{ env.STAGING_SSH_HOST != '' }}
         env:
           STAGING_SSH_HOST: ${{ secrets.STAGING_SSH_HOST }}
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262 # v1.0.3
         with:
           host: ${{ secrets.STAGING_SSH_HOST }}
           username: ${{ secrets.STAGING_SSH_USER }}
