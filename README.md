@@ -43,15 +43,15 @@ npm install
 
 ### 3. Environment Setup (Optional)
 
-Salin file `.env.example` menjadi `.env.local` jika ingin menyesuaikan target proxy backend saat development (default mengarah ke `http://localhost:3000`):
+Copy `.env.example` to `.env.local` if you want to customize the backend proxy target during development (defaults to `http://localhost:3000`):
 
 ```bash
 cp .env.example .env.local
 ```
 
-Variabel yang tersedia di `.env.local`:
+Available variables in `.env.local`:
 ```bash
-# Target proxy backend API saat development
+# Backend API proxy target during development
 VITE_API_URL=http://localhost:3000
 ```
 ### 4. Start Development Server
@@ -68,14 +68,14 @@ docker compose up --build
 ```
 
 #### Full-Stack Workspace Mode (Parent Workspace)
-Jika menggunakan struktur monorepo/workspace induk (`insight-workspace`):
+If you use a parent monorepo/workspace structure (`insight-workspace`):
 ```text
 insight-workspace/
 ├── docker-compose.yml     # Orchestration (FE + BE + DB)
 ├── FE-insight-web/        # Frontend Client
 └── BE-insight-api/        # Express.js Backend API
 ```
-Jalankan dari direktori induk:
+Run from the parent directory:
 ```bash
 docker compose up -d
 ```
@@ -108,15 +108,15 @@ npx vitest --ui
 ## Deployment
 
 ### 1. Automated Staging Deployment (GitHub Actions → Cloudflare Pages Preview)
-Setiap `git push` ke branch `main` akan otomatis:
-1. Menjalankan linter (`oxlint`), unit test (`vitest`), dan build TypeScript.
-2. Men-deploy ke preview branch `staging` di Cloudflare Pages (`staging.fe-insight-web.pages.dev`, publik) — termasuk `functions/api/` sehingga staging menguji runtime Functions yang identik dengan production.
+Every `git push` to the `main` branch (or a manual `workflow_dispatch` run of `Deploy Staging`) will automatically:
+1. Run the linter (`oxlint`), unit tests (`vitest`), and TypeScript build.
+2. Deploy to the `staging` branch preview on Cloudflare Pages (`staging.fe-insight-web.pages.dev`, public) — including `functions/api/` so staging tests the same Functions runtime as production.
 
-**GitHub Secrets yang perlu dikonfigurasi di repository** (Settings → Secrets and variables → Actions, sama dengan production):
+**GitHub Secrets required in the repository** (Settings → Secrets and variables → Actions, same as production):
 - `CLOUDFLARE_API_TOKEN`: API token (Account / Cloudflare Pages / Edit).
-- `CLOUDFLARE_ACCOUNT_ID`: Account ID Cloudflare.
+- `CLOUDFLARE_ACCOUNT_ID`: Cloudflare Account ID.
 
-Jika secrets belum diisi, job `verify` tetap berjalan dan step deploy dilaporkan `skipped` (run hijau).
+If the secrets are not set, the `verify` job still runs and the deploy step is reported as `skipped` (green run).
 
 ### 2. Manual Staging Preview Deployment
 ```bash
@@ -124,30 +124,33 @@ npm run build
 npx wrangler pages deploy dist --project-name=fe-insight-web --branch=staging
 ```
 
-### Opsi B: VPS via Docker Compose (fallback)
-Jalur lama tetap tersedia sebagai fallback bila Pages tidak dapat dipakai (deploy otomatis via SSH sudah digantikan bagian 1 di atas; jalankan manual di VPS):
+### Option B: VPS via Docker Compose (fallback)
+The legacy path remains available as a fallback when Pages cannot be used (automatic SSH deploy has been replaced by section 1 above; run manually on the VPS):
 ```bash
 docker compose -f docker-compose.staging.yml up -d --build
 ```
-Aplikasi berjalan pada port `8080` dengan Nginx reverse proxy ke API live `biru-langit.com`.
+The app runs on port `8080` with an Nginx reverse proxy to the live `biru-langit.com` API.
 
 ### 3. Production Release via Tag (GitHub Actions → Cloudflare Pages)
-Push tag `vX.Y.Z` untuk membuat GitHub Release sekaligus deploy ke production (`insight.biru-langit.com`, custom domain di dashboard Pages project `fe-insight-web`) — butuh secrets `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`:
+Push a semver `vX.Y.Z` tag (the workflow only triggers on `v*.*.*`) to create a GitHub Release and deploy to production (Pages project `fe-insight-web`; custom domain `insight.biru-langit.com` once DNS resolves) — requires the `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` secrets:
 ```bash
 git tag v0.0.1 && git push origin v0.0.1
 ```
+> Do not deploy a tag checkout manually without `--branch=main`: tags check out as detached HEAD and wrangler would infer branch `head` (this is how `v0.0.1` once landed on `head.fe-insight-web.pages.dev` instead of production). The workflow pins `--branch=main` for this reason.
+
 ### 4. Manual Cloudflare Pages / Static Hosting
+Run from the repo root so wrangler uploads `functions/api/` alongside `dist/` (otherwise the `/api/` proxy is missing). Pin `--branch=main` for production — never deploy a tag checkout without it (see note under section 3):
 ```bash
 npm run build
-npx wrangler pages deploy dist --project-name=fe-insight-web
+npx wrangler pages deploy dist --project-name=fe-insight-web --branch=main
 ```
 ### 5. Hostinger Shared Hosting (Production SPA)
-1. Jalankan build produksi:
+1. Run the production build:
    ```bash
    npm run build
    ```
-2. Upload seluruh isi folder `dist/` ke direktori `public_html` di cPanel/Hostinger File Manager.
-3. Pastikan file `.htaccess` berada di root `public_html` untuk fallback React Router:
+2. Upload the entire contents of the `dist/` folder to the `public_html` directory in cPanel/Hostinger File Manager.
+3. Make sure the `.htaccess` file is at the `public_html` root for the React Router fallback:
    ```apache
    <IfModule mod_rewrite.c>
      RewriteEngine On
