@@ -5,19 +5,11 @@ import { Line, LineChart, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { Activity, ArrowUpRight } from 'lucide-react';
 import { Link } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
-import { getTelkomStationHistory, getTelkomStationsOverview } from '@/services/telkomApi';
-import { comparisonChartConfig, type MultiStationPoint } from '@/components/charts/MultiStationComparisonChart';
+import { getTelkomStationHistory } from '@/services/telkomApi';
+import { comparisonChartConfig } from '@/components/charts/MultiStationComparisonChart';
+import { getIspuQuality } from '@/components/map/AirQualityMap';
+import { buildTelemetryWindow, type WindowPoint } from '@/lib/telemetryWindow';
 import { useMemo } from 'react';
-
-const fallbackComparisonData: MultiStationPoint[] = [
-  { time: '10.00', date: '11 Sep 2026', fullTime: '11 Sep 2026 10.00', timestamp: 1, tult: 55, gku: 72, deli: 95 },
-  { time: '11.00', date: '11 Sep 2026', fullTime: '11 Sep 2026 11.00', timestamp: 2, tult: 60, gku: 75, deli: 97 },
-  { time: '12.00', date: '11 Sep 2026', fullTime: '11 Sep 2026 12.00', timestamp: 3, tult: 62, gku: 78, deli: 99 },
-  { time: '13.00', date: '11 Sep 2026', fullTime: '11 Sep 2026 13.00', timestamp: 4, tult: 59, gku: 76, deli: 94 },
-  { time: '14.00', date: '11 Sep 2026', fullTime: '11 Sep 2026 14.00', timestamp: 5, tult: 58, gku: 74, deli: 92 },
-  { time: '15.00', date: '11 Sep 2026', fullTime: '11 Sep 2026 15.00', timestamp: 6, tult: 54, gku: 71, deli: 88 },
-  { time: '16.00', date: '11 Sep 2026', fullTime: '11 Sep 2026 16.00', timestamp: 7, tult: 52, gku: 70, deli: 85 },
-];
 
 export function LiveTelemetryPreview() {
   const { data: tultData = [] } = useQuery({
@@ -38,110 +30,14 @@ export function LiveTelemetryPreview() {
     staleTime: 1000 * 60 * 2,
   });
 
-  const { data: overviewStations = [] } = useQuery({
-    queryKey: ['landing-telkom-stations-overview'],
-    queryFn: getTelkomStationsOverview,
-    staleTime: 1000 * 60 * 2,
-  });
-  const { chartData, activeDateRange } = useMemo(() => {
-    const points: Array<{ station: 'tult' | 'gku' | 'deli'; time: Date; pm25: number | null }> = [];
+  const { points, windowLabel, dateRange, hasAnyValue, stationsWithData, latest } = useMemo(
+    () => buildTelemetryWindow({ tult: tultData, gku: gkuData, deli: deliData }),
+    [tultData, gkuData, deliData]
+  );
 
-    const addToList = (list: typeof tultData, station: 'tult' | 'gku' | 'deli') => {
-      for (const item of list) {
-        if (!item.created_at) continue;
-        const d = new Date(item.created_at);
-        if (!isNaN(d.getTime())) {
-          points.push({
-            station,
-            time: d,
-            pm25: typeof item.pm25 === 'number' ? item.pm25 : null,
-          });
-        }
-      }
-    };
-
-    addToList(tultData, 'tult');
-    addToList(gkuData, 'gku');
-    addToList(deliData, 'deli');
-
-    if (points.length === 0) {
-      return { chartData: fallbackComparisonData, activeDateRange: '11 Sep 2026' };
-    }
-
-    let maxTs = 0;
-    for (const p of points) {
-      const ts = p.time.getTime();
-      if (ts > maxTs) maxTs = ts;
-    }
-
-    const endHourDate = new Date(maxTs);
-    endHourDate.setMinutes(0, 0, 0);
-    const endTs = endHourDate.getTime();
-    const startTs = endTs - 6 * 60 * 60 * 1000; // 6 jam terakhir
-
-    const timeMap = new Map<
-      number,
-      { time: Date; tult: number | null; gku: number | null; deli: number | null }
-    >();
-
-    const hasDeliInWindow = points.some(
-      (p) => p.station === 'deli' && p.time.getTime() >= startTs && p.time.getTime() <= endTs
-    );
-    const deliOverview = overviewStations.find((s) => s.locationKey === 'Deli');
-    const fallbackDeliPm25 = deliOverview?.pm25 ?? (deliData.length > 0 ? deliData[0].pm25 : 85);
-
-    for (const p of points) {
-      const pTs = p.time.getTime();
-      if (pTs < startTs || pTs > endTs) continue;
-
-      const bucketTs = Math.round(pTs / (2 * 60 * 1000)) * (2 * 60 * 1000);
-      let entry = timeMap.get(bucketTs);
-      if (!entry) {
-        entry = { time: new Date(bucketTs), tult: null, gku: null, deli: null };
-        timeMap.set(bucketTs, entry);
-      }
-      if (p.pm25 != null) {
-        entry[p.station] = p.pm25;
-      }
-    }
-
-    if (!hasDeliInWindow && typeof fallbackDeliPm25 === 'number') {
-      for (const entry of timeMap.values()) {
-        entry.deli = fallbackDeliPm25;
-      }
-    }
-
-    const result: MultiStationPoint[] = [];
-    const dateSet = new Set<string>();
-
-    for (const [ts, entry] of timeMap.entries()) {
-      const d = entry.time;
-      const dateStr = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-      dateSet.add(dateStr);
-
-      const hourStr = String(d.getHours()).padStart(2, '0');
-      const minuteStr = String(d.getMinutes()).padStart(2, '0');
-      const timeLabel = `${hourStr}.${minuteStr}`;
-
-      result.push({
-        time: timeLabel,
-        date: dateStr,
-        fullTime: `${dateStr} ${timeLabel}`,
-        timestamp: ts,
-        tult: entry.tult,
-        gku: entry.gku,
-        deli: entry.deli,
-      });
-    }
-
-    const sorted = result.sort((a, b) => a.timestamp - b.timestamp);
-    const activeDates = Array.from(dateSet).join(' - ');
-
-    return {
-      chartData: sorted.length > 0 ? sorted : fallbackComparisonData,
-      activeDateRange: activeDates || '11 Sep 2026',
-    };
-  }, [tultData, gkuData, deliData, overviewStations]);
+  const tultQuality = getIspuQuality(latest.tult);
+  const gkuQuality = getIspuQuality(latest.gku);
+  const deliQuality = getIspuQuality(latest.deli);
 
   return (
     <section id="telemetry" className="py-20">
@@ -153,7 +49,8 @@ export function LiveTelemetryPreview() {
               Komparasi PM2.5 Antar Stasiun
             </h2>
             <p className="text-muted-foreground text-sm sm:text-base">
-              Tren fluktuasi konsentrasi partikulat halus (PM2.5) per 2 menit ({activeDateRange}) di 3 lokasi Telkom University: TULT, GKU, dan Gedung Deli.
+              Tren fluktuasi konsentrasi partikulat halus (PM2.5) per 2 menit (
+              {hasAnyValue ? `${windowLabel}, ${dateRange}` : 'satu jam terakhir'}) di 3 lokasi Telkom University: TULT, GKU, dan Gedung Deli.
             </p>
           </div>
 
@@ -179,7 +76,7 @@ export function LiveTelemetryPreview() {
                   Grafik Simultan 3 Titik (PM2.5)
                 </CardTitle>
                 <CardDescription className="font-mono text-xs mt-0.5">
-                  Tanggal: {activeDateRange} &bull; TULT, GKU, Gedung Deli
+                  Tanggal: {hasAnyValue ? `${dateRange} • Pukul ${windowLabel}` : '-'} &bull; TULT, GKU, Gedung Deli
                 </CardDescription>
               </div>
               <Link to="/dashboard/telemetry">
@@ -197,73 +94,94 @@ export function LiveTelemetryPreview() {
                   <span>TULT</span>
                   <span className="h-2 w-2 rounded-full bg-[#0079FE]"></span>
                 </div>
-                <div className="text-2xl font-bold font-mono text-foreground mt-1">58 <span className="text-xs font-normal text-muted-foreground">µg/m³</span></div>
-                <span className="text-[10px] text-amber-500 font-medium">ISPU: Sedang</span>
+                <div className="text-2xl font-bold font-mono text-foreground mt-1">
+                  {latest.tult ?? '—'}
+                  {latest.tult != null && <span className="text-xs font-normal text-muted-foreground"> µg/m³</span>}
+                </div>
+                <span className={`text-[10px] font-medium ${tultQuality.textClass}`}>ISPU: {tultQuality.label}</span>
               </div>
               <div className="p-3 rounded-lg bg-[#10b981]/5 border border-[#10b981]/20">
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span>GKU</span>
                   <span className="h-2 w-2 rounded-full bg-[#10b981]"></span>
                 </div>
-                <div className="text-2xl font-bold font-mono text-foreground mt-1">76 <span className="text-xs font-normal text-muted-foreground">µg/m³</span></div>
-                <span className="text-[10px] text-amber-500 font-medium">ISPU: Sedang</span>
+                <div className="text-2xl font-bold font-mono text-foreground mt-1">
+                  {latest.gku ?? '—'}
+                  {latest.gku != null && <span className="text-xs font-normal text-muted-foreground"> µg/m³</span>}
+                </div>
+                <span className={`text-[10px] font-medium ${gkuQuality.textClass}`}>ISPU: {gkuQuality.label}</span>
               </div>
               <div className="p-3 rounded-lg bg-[#f59e0b]/5 border border-[#f59e0b]/20">
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span>Gedung Deli</span>
                   <span className="h-2 w-2 rounded-full bg-[#f59e0b]"></span>
                 </div>
-                <div className="text-2xl font-bold font-mono text-foreground mt-1">99 <span className="text-xs font-normal text-muted-foreground">µg/m³</span></div>
-                <span className="text-[10px] text-amber-500 font-medium">ISPU: Sedang</span>
+                <div className="text-2xl font-bold font-mono text-foreground mt-1">
+                  {latest.deli ?? '—'}
+                  {latest.deli != null && <span className="text-xs font-normal text-muted-foreground"> µg/m³</span>}
+                </div>
+                <span className={`text-[10px] font-medium ${deliQuality.textClass}`}>ISPU: {deliQuality.label}</span>
               </div>
             </div>
 
-            <div className="pt-2">
-              <ChartContainer config={comparisonChartConfig} className="min-h-[300px] h-[340px] w-full">
-                <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.3} />
-                  <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} />
-                  <YAxis tickLine={false} axisLine={false} tickMargin={8} />
-                  <ChartTooltip
-                    content={
-                      <ChartTooltipContent
-                        labelFormatter={(_label, payload) => {
-                          const item = payload?.[0]?.payload as MultiStationPoint | undefined;
-                          return item?.fullTime || _label;
-                        }}
+            <div className="pt-2" data-testid={hasAnyValue ? 'telemetry-chart' : undefined}>
+              {!hasAnyValue ? (
+                <div className="h-[340px] flex items-center justify-center text-sm text-muted-foreground">
+                  Belum ada data telemetri pada jam {windowLabel}.
+                </div>
+              ) : (
+                <ChartContainer config={comparisonChartConfig} className="min-h-[300px] h-[340px] w-full">
+                  <LineChart data={points} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.3} />
+                    <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} interval={4} />
+                    <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+                    <ChartTooltip
+                      content={
+                        <ChartTooltipContent
+                          labelFormatter={(_label, payload) => {
+                            const item = payload?.[0]?.payload as WindowPoint | undefined;
+                            return item?.fullTime || _label;
+                          }}
+                        />
+                      }
+                    />
+                    <ChartLegend content={<ChartLegendContent />} />
+                    {stationsWithData.tult && (
+                      <Line
+                        type="monotone"
+                        dataKey="tult"
+                        stroke="#0079FE"
+                        name="TULT (PM2.5)"
+                        strokeWidth={2.5}
+                        dot={{ r: 4 }}
+                        connectNulls={false}
                       />
-                    }
-                  />
-                  <ChartLegend content={<ChartLegendContent />} />
-                  <Line
-                    type="monotone"
-                    dataKey="tult"
-                    stroke="#0079FE"
-                    name="TULT (PM2.5)"
-                    strokeWidth={2.5}
-                    dot={{ r: 4 }}
-                    connectNulls
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="gku"
-                    stroke="#10b981"
-                    name="GKU (PM2.5)"
-                    strokeWidth={2.5}
-                    dot={{ r: 4 }}
-                    connectNulls
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="deli"
-                    stroke="#f59e0b"
-                    name="Gedung Deli (PM2.5)"
-                    strokeWidth={2.5}
-                    dot={{ r: 4 }}
-                    connectNulls
-                  />
-                </LineChart>
-              </ChartContainer>
+                    )}
+                    {stationsWithData.gku && (
+                      <Line
+                        type="monotone"
+                        dataKey="gku"
+                        stroke="#10b981"
+                        name="GKU (PM2.5)"
+                        strokeWidth={2.5}
+                        dot={{ r: 4 }}
+                        connectNulls={false}
+                      />
+                    )}
+                    {stationsWithData.deli && (
+                      <Line
+                        type="monotone"
+                        dataKey="deli"
+                        stroke="#f59e0b"
+                        name="Gedung Deli (PM2.5)"
+                        strokeWidth={2.5}
+                        dot={{ r: 4 }}
+                        connectNulls={false}
+                      />
+                    )}
+                  </LineChart>
+                </ChartContainer>
+              )}
             </div>
           </CardContent>
         </Card>

@@ -8,62 +8,15 @@ import { Card, CardContent } from '@/components/ui/card';
 import { MapPin, ArrowRight, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router';
 
-// Realistic representative fallback stations for landing page GIS demonstration
-const SHOWCASE_STATIONS: MapStation[] = [
-  {
-    uuid: 'telkom-tult',
-    name: 'TULT',
-    projectName: 'Telkom University AQMS',
-    type: 'aqms',
-    latitude: -6.968739,
-    longitude: 107.628128,
-    status: 'online',
-    pm25: 58,
-    temperature: 28.5,
-    humidity: 62,
-  },
-  {
-    uuid: 'telkom-gku',
-    name: 'GKU',
-    projectName: 'Telkom University AQMS',
-    type: 'aqms',
-    latitude: -6.972739,
-    longitude: 107.629506,
-    status: 'online',
-    pm25: 76,
-    temperature: 32.2,
-    humidity: 54,
-  },
-  {
-    uuid: 'telkom-deli',
-    name: 'Gedung Deli',
-    projectName: 'Telkom University AQMS',
-    type: 'aqms',
-    latitude: -6.975472,
-    longitude: 107.629619,
-    status: 'online',
-    pm25: 99,
-    temperature: 25.1,
-    humidity: 80,
-  },
-];
-
 export function MapPreviewSection() {
-  const { data: stations = SHOWCASE_STATIONS } = useQuery({
+  const { data: stations = [] } = useQuery({
     queryKey: ['landing-telkom-stations'],
-    queryFn: async () => {
-      try {
-        const res = await getTelkomStationsOverview();
-        return res && res.length > 0 ? res : SHOWCASE_STATIONS;
-      } catch {
-        return SHOWCASE_STATIONS;
-      }
-    },
+    queryFn: getTelkomStationsOverview,
     staleTime: 1000 * 60 * 2, // 2 minutes
   });
 
   const [selectedStationId, setSelectedStationId] = useState<string | null>(null);
-  const selectedStation = stations.find((s) => s.uuid === selectedStationId) || stations[0];
+  const selectedStation: MapStation | null = stations.find((s) => s.uuid === selectedStationId) ?? stations[0] ?? null;
   return (
     <section id="map-preview" className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
       {/* Header */}
@@ -98,8 +51,11 @@ export function MapPreviewSection() {
             <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               Titik Pemantauan Aktif
             </h3>
+            {stations.length === 0 && (
+              <p className="text-sm text-muted-foreground">Belum ada data stasiun.</p>
+            )}
             {stations.map((station) => {
-              const isSelected = selectedStation.uuid === station.uuid;
+              const isSelected = selectedStation?.uuid === station.uuid;
               return (
                 <Card
                   key={station.uuid}
@@ -155,7 +111,7 @@ export function MapPreviewSection() {
         <div className="lg:col-span-2 min-h-[460px] h-full flex flex-col">
           <AirQualityMap
             stations={stations}
-            selectedStationId={selectedStation.uuid}
+            selectedStationId={selectedStation?.uuid ?? null}
             onSelectStation={(s) => setSelectedStationId(s.uuid)}
             height="100%"
             className="flex-1 min-h-[460px] border-border/70"
