@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent, type ChartConfig } from '@/components/ui/chart';
 import { Line, LineChart, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { getTelkomStationHistory, getTelkomStationsOverview } from '@/services/telkomApi';
+import { getTelkomStationHistory } from '@/services/telkomApi';
 import { Activity, Radio } from 'lucide-react';
 import { useMemo } from 'react';
 
@@ -42,12 +42,6 @@ export function MultiStationComparisonChart({ timeRangeHours = 6 }: MultiStation
   const { data: deliData = [], isLoading: loadingDeli } = useQuery({
     queryKey: ['history-Deli'],
     queryFn: () => getTelkomStationHistory({ location: 'Deli' }),
-    staleTime: 1000 * 60 * 2,
-  });
-
-  const { data: overviewStations = [] } = useQuery({
-    queryKey: ['telkom-stations-overview'],
-    queryFn: getTelkomStationsOverview,
     staleTime: 1000 * 60 * 2,
   });
 
@@ -99,13 +93,6 @@ export function MultiStationComparisonChart({ timeRangeHours = 6 }: MultiStation
       { time: Date; tult: number | null; gku: number | null; deli: number | null }
     >();
 
-    // Check if deli has data in this window; if not, use last known value from overview
-    const hasDeliInWindow = points.some(
-      (p) => p.station === 'deli' && p.time.getTime() >= startTs && p.time.getTime() <= endTs
-    );
-    const deliOverview = overviewStations.find((s) => s.locationKey === 'Deli');
-    const fallbackDeliPm25 = deliOverview?.pm25 ?? (deliData.length > 0 ? deliData[0].pm25 : 85);
-
     for (const p of points) {
       const pTs = p.time.getTime();
       // Exclude points beyond the round hour cutoff or before startTs
@@ -120,13 +107,6 @@ export function MultiStationComparisonChart({ timeRangeHours = 6 }: MultiStation
       }
       if (p.pm25 != null) {
         entry[p.station] = p.pm25;
-      }
-    }
-
-    // If Deli has no readings in the current active window, ensure points exist so the line renders
-    if (!hasDeliInWindow && typeof fallbackDeliPm25 === 'number') {
-      for (const entry of timeMap.values()) {
-        entry.deli = fallbackDeliPm25;
       }
     }
 
@@ -157,8 +137,7 @@ export function MultiStationComparisonChart({ timeRangeHours = 6 }: MultiStation
     const activeDates = Array.from(dateSet).join(' - ');
 
     return { chartData: sorted, activeDateRange: activeDates };
-  }, [tultData, gkuData, deliData, overviewStations, timeRangeHours]);
-
+  }, [tultData, gkuData, deliData, timeRangeHours]);
   return (
     <Card className="border-border/60 shadow-sm">
       <CardHeader className="border-b border-border/40 pb-4">

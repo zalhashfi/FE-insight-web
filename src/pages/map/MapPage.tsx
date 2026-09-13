@@ -45,10 +45,9 @@ async function fetchStations(): Promise<MapStation[]> {
   const rawList: RawDevice[] = json.devices || json.stations || [];
 
   return rawList.map((dev: RawDevice, index: number) => {
-    const seed = index + 1;
-    const pm25 = dev.pm25 ?? (25 + (seed * 17) % 65);
-    const temperature = dev.temperature ?? (24 + (seed * 3) % 8);
-    const humidity = dev.humidity ?? (60 + (seed * 5) % 25);
+    const pm25 = dev.pm25 ?? null;
+    const temperature = dev.temperature ?? null;
+    const humidity = dev.humidity ?? null;
 
     return {
       uuid: dev.uuid || dev.id || `dev-${index}`,
