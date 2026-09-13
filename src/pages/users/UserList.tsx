@@ -32,14 +32,14 @@ type User = {
 };
 
 async function fetchUsers(): Promise<User[]> {
-  const res = await fetch('/api/users', { credentials: 'include' });
+  const res = await fetch('/api/v1/users', { credentials: 'include' });
   if (!res.ok) throw new Error('Failed to fetch users');
   const json = await res.json();
   return json.users || [];
 }
 
 async function createUser(data: any) {
-  const res = await fetch('/api/users', {
+  const res = await fetch('/api/v1/users', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),

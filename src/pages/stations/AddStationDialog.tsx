@@ -50,7 +50,7 @@ export function AddStationDialog() {
         ...(data.longitude ? { longitude: parseFloat(data.longitude) } : {})
       };
       
-      const res = await apiFetch('/api/devices', {
+      const res = await apiFetch('/api/v1/devices', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

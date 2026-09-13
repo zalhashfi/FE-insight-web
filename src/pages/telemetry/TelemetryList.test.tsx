@@ -33,7 +33,7 @@ describe('TelemetryList Page', () => {
       if (url.includes('/api/telkom/all')) {
         return { ok: false, status: 404 } as Response;
       }
-      if (url.includes('/api/devices')) {
+      if (url.includes('/api/v1/devices')) {
         return { ok: true, json: async () => ({ stations: [] }) } as Response;
       }
       return { ok: true, json: async () => [] } as Response;
@@ -62,10 +62,10 @@ describe('TelemetryList Page', () => {
       if (url.includes('/api/telkom/all')) {
         return { ok: false, status: 404 } as Response;
       }
-      if (url.includes('/api/devices')) {
+      if (url.includes('/api/v1/devices')) {
         return { ok: true, json: async () => ({ stations: mockStations }) } as Response;
       }
-      if (url.includes('/api/data/devices')) {
+      if (url.includes('/api/v1/data/devices')) {
         return { ok: true, json: async () => ({ type: 'aqms', data: mockTelemetry }) } as Response;
       }
       return { ok: true, json: async () => [] } as Response;

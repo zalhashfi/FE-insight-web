@@ -42,14 +42,14 @@ async function fetchStations(): Promise<Station[]> {
     // fallback
   }
 
-  const res = await apiFetch('/api/devices');
+  const res = await apiFetch('/api/v1/devices');
   if (!res.ok) throw new Error('Failed to fetch devices');
   const json = await res.json();
   return json.devices || json.stations || [];
 }
 
 async function fetchUnregistered() {
-  const res = await apiFetch('/api/devices/unregistered');
+  const res = await apiFetch('/api/v1/devices/unregistered');
   if (!res.ok) throw new Error('Failed to fetch unregistered devices');
   const json = await res.json();
   return json.data || [];
@@ -63,7 +63,7 @@ async function fetchTelemetry(station: Station | undefined) {
     return { type: 'aqms', data };
   }
 
-  const res = await apiFetch(`/api/data/devices/${station.uuid}/data/aqms?limit=100`);
+  const res = await apiFetch(`/api/v1/data/devices/${station.uuid}/data/aqms?limit=100`);
   if (!res.ok) throw new Error('Failed to fetch telemetry');
   const json = await res.json();
   return {

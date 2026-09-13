@@ -31,7 +31,7 @@ export function FeatureBento() {
             </CardHeader>
             <CardContent>
               <div className="p-4 rounded-lg bg-muted/60 border border-border/40 font-mono text-xs text-muted-foreground space-y-1">
-                <div className="text-emerald-500">Endpoint: POST /api/data/ingest</div>
+                <div className="text-emerald-500">Endpoint: POST /api/v1/iot/ingest</div>
                 <div>Payload: &#123; uuid, sensor_type, measured_at, ...metrics &#125;</div>
                 <div>Database: MySQL / Relational Time-series Log</div>
               </div>

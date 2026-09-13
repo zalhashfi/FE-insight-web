@@ -8,7 +8,7 @@ import { apiFetch } from '@/lib/api';
 
 // API Fetcher
 const fetchUnregisteredDevices = async () => {
-  const res = await apiFetch('/api/devices/unregistered');
+  const res = await apiFetch('/api/v1/devices/unregistered');
   
   if (!res.ok) {
     throw new Error('Failed to fetch unregistered devices');
