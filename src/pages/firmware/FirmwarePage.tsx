@@ -21,7 +21,7 @@ type Firmware = {
 };
 
 async function fetchFirmwares(): Promise<Firmware[]> {
-  const res = await fetch('/api/firmware', { credentials: 'include' });
+  const res = await fetch('/api/v1/firmware', { credentials: 'include' });
   if (!res.ok) throw new Error('Failed to fetch firmware');
   return res.json();
 }

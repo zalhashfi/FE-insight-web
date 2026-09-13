@@ -37,7 +37,7 @@ async function fetchStations(): Promise<MapStation[]> {
   }
 
   // Priority 2: Fallback to internal /api/devices
-  const res = await apiFetch('/api/devices');
+  const res = await apiFetch('/api/v1/devices');
   if (!res.ok) {
     throw new Error('Gagal mengambil data perangkat');
   }

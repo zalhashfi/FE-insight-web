@@ -24,7 +24,7 @@ type Station = {
 };
 
 async function fetchStations(): Promise<Station[]> {
-  const res = await apiFetch('/api/devices');
+  const res = await apiFetch('/api/v1/devices');
   if (!res.ok) {
     throw new Error('Failed to fetch devices');
   }
