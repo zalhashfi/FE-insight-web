@@ -27,6 +27,9 @@ describe('telkomAdapter', () => {
   });
 
   it('correctly adapts /api/telkom/all raw object into NormalizedTelkomStation array', () => {
+    // Bekukan jam ke 2026-09-13 17:05 agar TULT/GKU segar (online) dan Deli basi (offline).
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-13T17:05:00'));
     const rawMock: TelkomAllResponse = {
       TULT: {
         created_at: '2026-09-13 17:00:00',
@@ -81,6 +84,7 @@ describe('telkomAdapter', () => {
     const deli = stations.find((s) => s.locationKey === 'Deli');
     expect(deli?.status).toBe('offline');
     expect(deli?.pm25).toBeNull();
+    vi.useRealTimers();
   });
 
   it('correctly adapts /api/:location/2m raw history array into NormalizedTelemetryPoint array', () => {
