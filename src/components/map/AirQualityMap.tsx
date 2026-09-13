@@ -173,18 +173,12 @@ export const AirQualityMap: React.FC<AirQualityMapProps> = ({
 
     const bounds: L.LatLngExpression[] = [];
 
-    stations.forEach((station, index) => {
-      // Deterministic spread around default coords if lat/lng missing
-      let lat = station.latitude;
-      let lng = station.longitude;
+    stations.forEach((station) => {
+      // Stasiun tanpa koordinat tidak dirender — tanpa posisi karangan.
+      const lat = station.latitude;
+      const lng = station.longitude;
 
-      if (lat == null || lng == null) {
-        // Offset slightly in circle pattern based on index
-        const angle = (index * (2 * Math.PI)) / Math.max(stations.length, 1);
-        const radius = 0.008 + (index % 3) * 0.004;
-        lat = defaultCenter[0] + radius * Math.cos(angle);
-        lng = defaultCenter[1] + radius * Math.sin(angle);
-      }
+      if (lat == null || lng == null) return;
 
       const isSelected = station.uuid === selectedStationId;
       const icon = createCustomIcon(station, isSelected);

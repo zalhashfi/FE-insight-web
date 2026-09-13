@@ -86,13 +86,10 @@ function parseNumeric(val: string | number | null | undefined): number | null {
  * Adapts /api/telkom/all dictionary response to an array of MapStation objects
  */
 export function adaptTelkomAllToStations(raw: TelkomAllResponse): NormalizedTelkomStation[] {
-  return Object.entries(raw).map(([key, data]) => {
-    const meta = TELKOM_LOCATION_COORDS[key] || {
-      lat: -6.974,
-      lng: 107.63,
-      name: `Stasiun Telkom ${key}`,
-      description: `Stasiun Pemantau Lingkungan ${key}`,
-    };
+  return Object.entries(raw).flatMap(([key, data]) => {
+    const meta = TELKOM_LOCATION_COORDS[key];
+    // Kunci stasiun tak dikenal dilewati — tanpa nama/koordinat karangan.
+    if (!meta) return [];
 
     const temp = parseNumeric(data.temperature);
     // pony-tail: ignore negative dummy sensor temperature readings (-1.00)
