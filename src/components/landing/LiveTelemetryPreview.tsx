@@ -73,7 +73,7 @@ export function LiveTelemetryPreview() {
               <div>
                 <CardTitle className="text-xl flex items-center gap-2">
                   <Activity className="w-5 h-5 text-primary" />
-                  Grafik Simultan 3 Titik (PM2.5)
+                  Grafik Histori Simultan 3 Titik (PM2.5)
                 </CardTitle>
                 <CardDescription className="font-mono text-xs mt-0.5">
                   Tanggal: {hasAnyValue ? `${dateRange} • Pukul ${windowLabel}` : '-'} &bull; TULT, GKU, Gedung Deli

@@ -2,17 +2,34 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   adaptTelkomAllToStations,
   adaptTelkomHistoryToTelemetry,
+  isStationStale,
   type TelkomAllResponse,
   type TelkomHistoryResponse,
 } from '@/adapters/telkomAdapter';
 import { getTelkomStationsOverview, getTelkomStationHistory } from '@/services/telkomApi';
 import * as api from '@/lib/api';
-
 describe('telkomAdapter', () => {
+  it('menandai stasiun basi sebagai offline dan mengosongkan nilai', () => {
+    const now = new Date('2026-09-13T17:05:00').getTime();
+    // 3 hari basi → stale; 3 menit segar → tidak stale.
+    expect(isStationStale('2026-09-10 23:00:00', now)).toBe(true);
+    expect(isStationStale('2026-09-13 17:02:00', now)).toBe(false);
+    expect(isStationStale(null, now)).toBe(true);
+    expect(isStationStale('bukan-tanggal', now)).toBe(true);
+
+    const stations = adaptTelkomAllToStations({
+      Deli: { created_at: '2026-09-10 23:00:00', temperature: '25.07', humidity: '80', co2: '682', pm25: '99.16', ws: '0.29', wd: '287' },
+    });
+    expect(stations).toHaveLength(1);
+    expect(stations[0].status).toBe('offline');
+    expect(stations[0].pm25).toBeNull();
+    expect(stations[0].temperature).toBeNull();
+  });
+
   it('correctly adapts /api/telkom/all raw object into NormalizedTelkomStation array', () => {
     const rawMock: TelkomAllResponse = {
       TULT: {
-        created_at: '2026-09-11 15:26:00',
+        created_at: '2026-09-13 17:00:00',
         temperature: '-1.00',
         humidity: null,
         co2: '522',
@@ -21,7 +38,7 @@ describe('telkomAdapter', () => {
         wd: '184',
       },
       GKU: {
-        created_at: '2026-09-11 15:28:00',
+        created_at: '2026-09-13 17:02:00',
         temperature: '32.18',
         humidity: '54',
         co2: '556',
@@ -59,6 +76,11 @@ describe('telkomAdapter', () => {
     expect(gku?.temperature).toBeCloseTo(32.18, 2);
     expect(gku?.humidity).toBe(54);
     expect(gku?.status).toBe('online');
+
+    // Deli 2026-09-10 basi → offline, nilai dikosongkan.
+    const deli = stations.find((s) => s.locationKey === 'Deli');
+    expect(deli?.status).toBe('offline');
+    expect(deli?.pm25).toBeNull();
   });
 
   it('correctly adapts /api/:location/2m raw history array into NormalizedTelemetryPoint array', () => {
@@ -98,11 +120,13 @@ describe('telkomApi service', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
   });
-
   it('getTelkomStationsOverview calls /api/telkom/all and parses stations', async () => {
+    const d = new Date(Date.now() - 5 * 60 * 1000);
+    const p = (n: number) => String(n).padStart(2, '0');
+    const recent = `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
     const mockData = {
       TULT: {
-        created_at: '2026-09-11 12:00:00',
+        created_at: recent,
         temperature: '28.0',
         humidity: '60',
         co2: '500',
