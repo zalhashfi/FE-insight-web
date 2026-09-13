@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router';
 import { LiveTelemetryPreview } from './LiveTelemetryPreview';
 import * as telkomApi from '@/services/telkomApi';
 import type * as Recharts from 'recharts';
+import type { NormalizedTelemetryPoint } from '@/adapters/telkomAdapter';
 vi.mock('recharts', async () => {
   const actual = await vi.importActual<typeof Recharts>('recharts');
   return {
