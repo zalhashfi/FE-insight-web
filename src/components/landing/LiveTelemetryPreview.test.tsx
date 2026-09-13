@@ -83,6 +83,7 @@ describe('LiveTelemetryPreview', () => {
     const { container } = renderComponent();
 
     expect(await screen.findByTestId('telemetry-chart')).toBeInTheDocument();
+    expect(screen.getByText(/Grafik Histori Simultan 3 Titik/i)).toBeInTheDocument();
     // Kartu KPI menampilkan nilai jendela; Deli kosong → em-dash.
     expect(container.textContent).toContain('58');
     expect(container.textContent).toContain('76');

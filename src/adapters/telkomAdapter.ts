@@ -82,6 +82,22 @@ function parseNumeric(val: string | number | null | undefined): number | null {
   return isNaN(num) ? null : num;
 }
 
+/** Ambang basi: stasiun tanpa kabar > 60 menit dianggap mati. */
+export const STALE_AFTER_MS = 60 * 60 * 1000;
+
+/**
+ * true bila created_at absen, tak terparse, di masa depan, atau lebih tua dari ambang.
+ * Format API "YYYY-MM-DD HH:mm:ss" diasumsikan waktu lokal.
+ */
+export function isStationStale(createdAt: string | null | undefined, nowMs: number = Date.now()): boolean {
+  if (!createdAt) return true;
+  const ts = new Date(createdAt.replace(' ', 'T')).getTime();
+  if (Number.isNaN(ts)) return true;
+  const age = nowMs - ts;
+  if (age < 0) return false;
+  return age > STALE_AFTER_MS;
+}
+
 /**
  * Adapts /api/telkom/all dictionary response to an array of MapStation objects
  */
@@ -100,6 +116,9 @@ export function adaptTelkomAllToStations(raw: TelkomAllResponse): NormalizedTelk
     const co2 = parseNumeric(data.co2);
     const ws = parseNumeric(data.ws);
     const wd = parseNumeric(data.wd);
+    // Stasiun basi dianggap mati: nilai dikosongkan agar kartu tampil — + Offline,
+    // bukan angka terakhir yang menyesatkan.
+    const stale = isStationStale(data.created_at);
 
     return {
       uuid: `telkom-${key.toLowerCase()}`,
@@ -111,13 +130,13 @@ export function adaptTelkomAllToStations(raw: TelkomAllResponse): NormalizedTelk
       currentVersion: 'v2.4-telkom',
       latitude: meta.lat,
       longitude: meta.lng,
-      status: pm25 != null ? 'online' : 'warning',
-      pm25,
-      temperature: validTemp,
-      humidity,
-      co2,
-      windSpeed: ws,
-      windDirection: wd,
+      status: stale ? 'offline' : pm25 != null ? 'online' : 'warning',
+      pm25: stale ? null : pm25,
+      temperature: stale ? null : validTemp,
+      humidity: stale ? null : humidity,
+      co2: stale ? null : co2,
+      windSpeed: stale ? null : ws,
+      windDirection: stale ? null : wd,
       lastUpdated: data.created_at,
     };
   });

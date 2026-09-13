@@ -70,7 +70,7 @@ export function MapPreviewSection() {
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="font-bold text-sm text-foreground">{station.name}</span>
                       <Badge variant="outline" className="text-[10px] uppercase font-bold">
-                        {station.type}
+                        {station.status === 'offline' ? 'Offline' : station.type}
                       </Badge>
                     </div>
                     <p className="text-xs text-muted-foreground mb-3">{station.projectName}</p>
@@ -83,11 +83,15 @@ export function MapPreviewSection() {
                       </div>
                       <div>
                         <div className="text-[10px] text-muted-foreground">Suhu</div>
-                        <div className="font-bold text-foreground">{station.temperature}°C</div>
+                        <div className="font-bold text-foreground">
+                          {station.temperature != null ? `${station.temperature}°C` : 'N/A'}
+                        </div>
                       </div>
                       <div>
                         <div className="text-[10px] text-muted-foreground">Lembap</div>
-                        <div className="font-bold text-foreground">{station.humidity}%</div>
+                        <div className="font-bold text-foreground">
+                          {station.humidity != null ? `${station.humidity}%` : 'N/A'}
+                        </div>
                       </div>
                     </div>
                   </CardContent>
