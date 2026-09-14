@@ -1,0 +1,52 @@
+name: Deploy Staging (VPS)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: fe-staging-vps
+  cancel-in-progress: true
+
+# Least privilege: this workflow only reads code; deployment happens via SSH
+# from the runner to the VPS using the key stored in repo secrets.
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Lint, Test & Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+
+  deploy:
+    name: Deploy to VPS staging
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull & rebuild fe-staging
+        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262 # v1.0.3
+        with:
+          host: ${{ secrets.STAGING_SSH_HOST }}
+          username: ${{ secrets.STAGING_SSH_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          port: ${{ secrets.STAGING_SSH_PORT }}
+          script: |
+            set -e
+            cd ~/apps/insight-staging/FE-insight-web
+            git fetch origin main
+            git reset --hard origin/main
+            # Recreate FE service only; BE/MySQL untouched.
+            docker compose -f ~/apps/insight-staging/BE-insight-web/docker-compose.yml up -d --build fe-staging
+            sleep 5
+            curl -s -o /dev/null -w "fe proxy    %{http_code} (expect 401)\n" localhost:8080/api/v1/devices
